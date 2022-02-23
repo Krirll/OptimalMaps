@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".presentation.fragments.MapFragment">
+
+    <org.osmdroid.views.MapView
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/searchButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="@color/white"
+        android:text="@string/search"
+        android:textAlignment="textStart"
+        android:textAllCaps="false"
+        android:textColor="@color/grey"
+        android:textSize="15sp"
+        app:cornerRadius="20dp"
+        app:icon="@drawable/baseline_search_20"
+        app:iconGravity="start"
+        app:iconPadding="20dp"
+        app:iconTint="@color/black" />
+
+</FrameLayout>
