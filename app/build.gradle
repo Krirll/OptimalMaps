@@ -55,6 +55,7 @@ dependencies {
     implementation ("com.google.dagger:dagger:$dagger")
     kapt ("com.google.dagger:dagger-compiler:$dagger")
 
+
     //Jetpack navigation
     implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
     implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
