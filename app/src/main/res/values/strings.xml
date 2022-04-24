@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">OptimalMaps</string>
     <string name="search">Search</string>
+    <string name="default_point">default_point</string>
+    <string name="history_point">history_point</string>
+    <string name="no_internet">Something went wrong. Check your internet connection</string>
+    <string name="no_search_result">No results for this query</string>
+    <string name="empty_query">Empty query</string>
+    <string name="error">Error</string>
+    <string name="ok">OK</string>
 </resources>
