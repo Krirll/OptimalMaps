@@ -2,4 +2,11 @@
 <resources>
     <string name="app_name">OptimalMaps</string>
     <string name="search">Поиск</string>
+    <string name="default_point">default_point</string>
+    <string name="history_point">history_point</string>
+    <string name="no_internet">Что-то пошло не так. Проверьте интернет соединение</string>
+    <string name="no_search_result">Нет результатов по данному запросу</string>
+    <string name="empty_query">Пустой запрос</string>
+    <string name="error">Ошибка</string>
+    <string name="ok">ОК</string>
 </resources>

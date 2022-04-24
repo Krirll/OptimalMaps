@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OptimalMaps">
         <activity
-            android:name=".presentation.AppActivity"
+            android:name=".presentation.activity.AppActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
