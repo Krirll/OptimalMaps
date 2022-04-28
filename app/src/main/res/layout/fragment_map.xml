@@ -53,7 +53,7 @@
         android:layout_marginBottom="95dp"
         android:backgroundTint="@color/white"
         app:cornerRadius="35dp"
-        app:icon="@drawable/icon_fix_location"
+        app:icon="@drawable/icon_no_location"
         app:iconGravity="end"
         app:iconSize="35dp"
         app:iconTint="@color/black" />
