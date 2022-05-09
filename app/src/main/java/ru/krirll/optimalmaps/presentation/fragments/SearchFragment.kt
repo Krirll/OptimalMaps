@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -14,6 +15,7 @@ import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentSearchBinding
 import ru.krirll.optimalmaps.presentation.adapters.PointItemViewType
 import ru.krirll.optimalmaps.presentation.adapters.PointListAdapter
+import ru.krirll.optimalmaps.presentation.other.Locale
 import ru.krirll.optimalmaps.presentation.other.NetworkError
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 import ru.krirll.optimalmaps.presentation.viewModels.SearchFragmentViewModel
@@ -47,8 +49,14 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initSearchView()
         initRecyclerView()
+        setViewModelLocale()
         getSearchHistory()
         observeViewModel()
+    }
+
+    private fun setViewModelLocale() {
+        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        searchViewModel.setLocale(Locale.getLocale(currentLocale))
     }
 
     private fun initRecyclerView() {

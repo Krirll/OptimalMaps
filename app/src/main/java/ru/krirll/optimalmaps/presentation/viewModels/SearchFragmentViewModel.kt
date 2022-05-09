@@ -9,7 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
-import ru.krirll.optimalmaps.domain.entities.GetPointByQueryUseCase
+import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
 import ru.krirll.optimalmaps.domain.entities.LoadSearchHistoryUseCase
 import ru.krirll.optimalmaps.domain.entities.SavePointItemUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
@@ -29,9 +29,11 @@ class SearchFragmentViewModel(
 
     //init repository and use cases
     private val repository: PointRepositoryImpl = PointRepositoryImpl(app)
-    private val getSearchByQueryUseCase: GetPointByQueryUseCase = GetPointByQueryUseCase(repository)
+    private val getSearchByQueryUseCase: GetPointsByQueryUseCase = GetPointsByQueryUseCase(repository)
     private val loadSearchHistoryUseCase: LoadSearchHistoryUseCase = LoadSearchHistoryUseCase(repository)
     private val savePointItemUseCase: SavePointItemUseCase = SavePointItemUseCase(repository)
+
+    private var locale: String? = null
 
     //list for api result
     private var _pointItemList = MutableLiveData<List<PointItem>>()
@@ -49,6 +51,10 @@ class SearchFragmentViewModel(
         get() = _networkError.receiveAsFlow()
 
     private var lastQuery: String = "" //for saving last query
+
+    fun setLocale(str: String) {
+        locale = str
+    }
 
     fun loadSearchHistory() {
         if (_pointHistoryList.value == null)
@@ -81,6 +87,7 @@ class SearchFragmentViewModel(
                 if (query != "" && query != lastQuery) {
                     val result = getSearchByQueryUseCase.invoke(
                         query,
+                        locale ?: "",
                         { onError(NetworkError.INCORRECT_QUERY) },
                         { onError(NetworkError.NO_INTERNET) }
                     )
