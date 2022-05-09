@@ -7,6 +7,7 @@ interface PointRepository {
 
     suspend fun getSearchResult(
         query: String,
+        locale: String,
         emptyResultEventListener: () -> Unit,
         noInternetEventListener: () -> Unit,
     ): List<PointItem>
