@@ -361,8 +361,6 @@ class MapFragment : Fragment(), LocationListener {
                 }
             icon = drawable
             id = idString
-            //TODO Дополнить информацией диалоговое окно
-            //setOnMarkerClickListener {  }
         }
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
     }
