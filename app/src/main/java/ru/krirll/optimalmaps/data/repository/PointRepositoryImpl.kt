@@ -20,13 +20,14 @@ class PointRepositoryImpl(
 
     override suspend fun getSearchResult(
         query: String,
+        locale: String,
         emptyResultEventListener: () -> Unit, //when result is empty
         noInternetEventListener: () -> Unit   //when was exception
     ): List<PointItem> {
         var result: List<PointItem> = listOf()
         try {
             //get result from api and map result items to PointItem
-            result = apiService.getSearchResult(query).map { mapper.mapDtoToEntity(it) }
+            result = apiService.getSearchResult(query, locale).map { mapper.mapDtoToEntity(it) }
             if (result.isEmpty())
                 emptyResultEventListener.invoke()
         } catch (t: Throwable) {
