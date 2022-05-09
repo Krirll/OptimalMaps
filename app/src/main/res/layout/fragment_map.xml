@@ -11,6 +11,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <ProgressBar
+        android:id="@+id/currentLocationProgress"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/purple_500"
+        android:visibility="gone" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/searchButton"
         android:layout_width="match_parent"
