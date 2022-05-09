@@ -13,7 +13,7 @@ import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
 import ru.krirll.optimalmaps.domain.entities.LoadSearchHistoryUseCase
 import ru.krirll.optimalmaps.domain.entities.SavePointItemUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
-import ru.krirll.optimalmaps.presentation.other.NetworkError
+import ru.krirll.optimalmaps.presentation.enums.NetworkError
 
 class SearchFragmentViewModel(
     app: Application

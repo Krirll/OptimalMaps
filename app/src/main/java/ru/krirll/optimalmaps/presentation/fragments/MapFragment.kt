@@ -32,8 +32,8 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
-import ru.krirll.optimalmaps.presentation.other.PointZoom
-import ru.krirll.optimalmaps.presentation.other.TitleAlertDialog
+import ru.krirll.optimalmaps.presentation.enums.PointZoom
+import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 
 class MapFragment : Fragment(), LocationListener {

@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.other
+package ru.krirll.optimalmaps.presentation.enums
 
 //errors api
 enum class NetworkError {

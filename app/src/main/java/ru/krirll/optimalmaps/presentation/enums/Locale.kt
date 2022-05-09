@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.other
+package ru.krirll.optimalmaps.presentation.enums
 
 enum class Locale(private val locale: String) {
     RU("ru-RU"),
