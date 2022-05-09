@@ -9,9 +9,10 @@
     <string name="empty_query">Пустой запрос</string>
     <string name="error">Ошибка</string>
     <string name="ok">ОК</string>
-    <string name="location_rationale">Для отображения вашего местоположения на карте требуется разрешение на определение местоположения</string>
+    <string name="location_rationale">Для отображения вашего точного местоположения на карте требуется разрешение на определение точного местоположения</string>
     <string name="cancel">Отмена</string>
     <string name="title_location_permission">Разрешение</string>
     <string name="title_geo_position">Геолокация</string>
     <string name="location_disabled">Геолокация должна быть включена</string>
+    <string name="internet">Интернет</string>
 </resources>
