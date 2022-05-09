@@ -9,8 +9,9 @@
     <string name="error">Error</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="location_rationale">Location permission is required to show your location on map</string>
+    <string name="location_rationale">The fine location permission is required to show your fine location on map</string>
     <string name="location_disabled">Geolocation must be enabled</string>
     <string name="title_location_permission">Permission</string>
     <string name="title_geo_position">GeoPosition</string>
+    <string name="internet">Internet</string>
 </resources>
