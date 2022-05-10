@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,6 +64,7 @@ class MapFragment : Fragment(), LocationListener {
     private var alertDialogTitle: TitleAlertDialog? = null
 
     private var locationManager: LocationManager? = null
+    private var isCurrentLocationInfoWindowOpened = false
 
     private var currentMapCenter: IGeoPoint? = null //for saving center
     private var currentMapZoom: Double? = null         //for saving zoom
@@ -113,6 +115,8 @@ class MapFragment : Fragment(), LocationListener {
                 savedInstanceState.getDoubleArray(CURRENT_MAP_CENTER)
                     ?.let { GeoPoint(it[0], it[1]) }
             currentMapZoom = savedInstanceState.getDouble(CURRENT_MAP_ZOOM)
+            //get current location info window state
+            isCurrentLocationInfoWindowOpened = savedInstanceState.getBoolean(IS_OPENED, false)
         }
     }
 
@@ -136,15 +140,18 @@ class MapFragment : Fragment(), LocationListener {
             stopProgress()
         val geoPoint = GeoPoint(location.latitude, location.longitude)
         val currentPositionOverlay = getMarkerById(CURRENT_LOCATION_MARKER)
-        if (currentPositionOverlay != null)
+        if (currentPositionOverlay != null) {
+            if (currentPositionOverlay.isInfoWindowShown)
+                currentPositionOverlay.closeInfoWindow()
             viewBinding.map.overlays.remove(currentPositionOverlay)
+        }
         if (isFixedCurrentLocation == true)
             setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
         addMarkerOnMap(
             geoPoint,
             PointZoom.SMALL_1.zoom,
             CURRENT_LOCATION_MARKER,
-            CURRENT_LOCATION_MARKER,
+            "",
             isFixedCurrentLocation ?: false
         )
     }
@@ -230,7 +237,7 @@ class MapFragment : Fragment(), LocationListener {
                     val marker = getMarkerById(CURRENT_LOCATION_MARKER)
                     if (marker != null) {
                         viewBinding.map.controller.apply {
-                            setZoom(PointZoom.SMALL_2.zoom)
+                            setZoom(PointZoom.SMALL_1.zoom)
                             animateTo(GeoPoint(marker.position))
                         }
                         setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
@@ -386,20 +393,35 @@ class MapFragment : Fragment(), LocationListener {
                 R.layout.default_info_window,
                 viewBinding.map,
                 idString,
+                //On delete event
                 { id ->
                     viewBinding.map.overlays.apply {
                         remove(getMarkerById(id).apply { closeInfoWindow() })
                     }
                     mapViewModel.removePoint()
                 },
-                { getMarkerById(id)?.closeInfoWindow() }
+                //On hide event
+                {
+                    getMarkerById(id)?.closeInfoWindow()
+                    if (id == CURRENT_LOCATION_MARKER)
+                        isCurrentLocationInfoWindowOpened = false
+                }
             )
+            if (isCurrentLocationInfoWindowOpened) {
+                startProgress()
+                mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
+            }
             if (idString != CURRENT_LOCATION_MARKER)
                 showInfoWindow()
             else {
                 setOnMarkerClickListener { _, _ ->
-                    startProgress()
-                    mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
+                    if (title != "")
+                        showInfoWindow()
+                    else {
+                        startProgress()
+                        mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
+                    }
+                    isCurrentLocationInfoWindowOpened = true
                     true
                 }
             }
@@ -414,6 +436,10 @@ class MapFragment : Fragment(), LocationListener {
             //set point on map
             viewBinding.map.apply {
                 if (point != null) {
+                    getMarkerById(DEFAULT_ID)?.let {
+                        it.closeInfoWindow()
+                        it.remove(this)
+                    }
                     addMarkerOnMap(
                         GeoPoint(point.lat, point.lon),
                         point.zoom,
@@ -490,24 +516,26 @@ class MapFragment : Fragment(), LocationListener {
             //set current map center
             if (currentMapCenter != null) setExpectedCenter(currentMapCenter)
             //set on touch listener
-            setOnTouchListener { view, _ ->
-                val currentMapState = view as MapView
-                if (!currentMapState.isAnimating) {
-                    if (currentMapState.mapCenter.latitude != currentMapCenter?.latitude
-                        && currentMapState.mapCenter.longitude != currentMapCenter?.longitude
-                    ) {
-                        currentMapCenter = GeoPoint(
-                            currentMapState.mapCenter.latitude,
-                            currentMapState.mapCenter.longitude
-                        )
-                        if (isFixedCurrentLocation == true) {
-                            setColor(R.color.black, viewBinding.currentLocationButton.icon)
-                            isFixedCurrentLocation = false
-                            stopProgress()
-                        }
-                    } else
-                        if (currentMapState.zoomLevelDouble != currentMapZoom)
-                            currentMapZoom = currentMapState.zoomLevelDouble
+            setOnTouchListener { view, event ->
+                if (event.action != MotionEvent.ACTION_UP && event.action != MotionEvent.ACTION_DOWN) {
+                    val currentMapState = view as MapView
+                    if (!currentMapState.isAnimating) {
+                        if (currentMapState.mapCenter.latitude != currentMapCenter?.latitude
+                            && currentMapState.mapCenter.longitude != currentMapCenter?.longitude
+                        ) {
+                            currentMapCenter = GeoPoint(
+                                currentMapState.mapCenter.latitude,
+                                currentMapState.mapCenter.longitude
+                            )
+                            if (isFixedCurrentLocation == true) {
+                                setColor(R.color.black, viewBinding.currentLocationButton.icon)
+                                isFixedCurrentLocation = false
+                                stopProgress()
+                            }
+                        } else
+                            if (currentMapState.zoomLevelDouble != currentMapZoom)
+                                currentMapZoom = currentMapState.zoomLevelDouble
+                    }
                 }
                 false
             }
@@ -553,6 +581,7 @@ class MapFragment : Fragment(), LocationListener {
             ) //save current map center
         )
         outState.putDouble(CURRENT_MAP_ZOOM, currentMapZoom ?: DEFAULT_ZOOM) //save current map zoom
+        outState.putBoolean(IS_OPENED, isCurrentLocationInfoWindowOpened)
         super.onSaveInstanceState(outState)
     }
 
@@ -564,6 +593,7 @@ class MapFragment : Fragment(), LocationListener {
         private const val TITLE = "TITLE"
         private const val ENABLED = true
         private const val DISABLED = false
+        private const val IS_OPENED = "IS_OPENED"
         private const val IS_FIXED_CURRENT_LOCATION = "IS_FIXED_CURRENT_LOCATION"
         private const val CURRENT_MAP_CENTER = "CURRENT_MAP_CENTER"
         private const val CURRENT_MAP_ZOOM = "CURRENT_MAP_ZOOM"

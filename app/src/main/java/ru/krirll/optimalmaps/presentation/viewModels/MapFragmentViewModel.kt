@@ -61,7 +61,7 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
             )
             if (result.isNotEmpty())
                 if (!isCurrentLocation)
-                    point.value = result.first()
+                    point.value = result.map { PointItem(it.zoom, it.text, false, lat, lon) }[0]
                 else
                     currentLocationPointTitle.value = result.first().text
         }
