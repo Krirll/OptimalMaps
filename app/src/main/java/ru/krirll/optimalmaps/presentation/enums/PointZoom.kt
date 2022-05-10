@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.other
+package ru.krirll.optimalmaps.presentation.enums
 
 enum class PointZoom(private val importance: Double, val zoom: Double) {
 

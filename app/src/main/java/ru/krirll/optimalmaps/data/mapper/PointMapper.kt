@@ -3,7 +3,7 @@ package ru.krirll.optimalmaps.data.mapper
 import ru.krirll.optimalmaps.data.database.model.PointItemDbModel
 import ru.krirll.optimalmaps.data.network.model.PointItemDto
 import ru.krirll.optimalmaps.domain.model.PointItem
-import ru.krirll.optimalmaps.presentation.other.PointZoom
+import ru.krirll.optimalmaps.presentation.enums.PointZoom
 
 class PointMapper {
 

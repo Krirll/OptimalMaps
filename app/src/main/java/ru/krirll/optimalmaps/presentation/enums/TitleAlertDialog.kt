@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.other
+package ru.krirll.optimalmaps.presentation.enums
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
