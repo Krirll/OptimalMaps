@@ -14,4 +14,6 @@
     <string name="title_location_permission">Permission</string>
     <string name="title_geo_position">GeoPosition</string>
     <string name="internet">Internet</string>
+    <string name="no_info_about_point">No information about this point</string>
+    <string name="your_position">Your position</string>
 </resources>
