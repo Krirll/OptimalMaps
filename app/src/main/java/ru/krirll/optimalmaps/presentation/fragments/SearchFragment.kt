@@ -98,6 +98,7 @@ class SearchFragment : Fragment() {
                 val message = when (it) {
                     NetworkError.INCORRECT_QUERY -> getString(R.string.no_search_result)
                     NetworkError.NO_INTERNET -> getString(R.string.no_internet)
+                    else -> ""
                 }
                 createSnackbar(message)
             }
