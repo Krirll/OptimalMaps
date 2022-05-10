@@ -33,7 +33,7 @@ class SearchFragmentViewModel(
     private val loadSearchHistoryUseCase: LoadSearchHistoryUseCase = LoadSearchHistoryUseCase(repository)
     private val savePointItemUseCase: SavePointItemUseCase = SavePointItemUseCase(repository)
 
-    private var locale: String? = null
+    private var locale: String = ""
 
     //list for api result
     private var _pointItemList = MutableLiveData<List<PointItem>>()
@@ -87,7 +87,7 @@ class SearchFragmentViewModel(
                 if (query != "" && query != lastQuery) {
                     val result = getSearchByQueryUseCase.invoke(
                         query,
-                        locale ?: "",
+                        locale,
                         { onError(NetworkError.INCORRECT_QUERY) },
                         { onError(NetworkError.NO_INTERNET) }
                     )
