@@ -19,19 +19,26 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getColor
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import com.google.android.material.snackbar.Snackbar
 import org.osmdroid.api.IGeoPoint
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
+import ru.krirll.optimalmaps.presentation.enums.Locale
+import ru.krirll.optimalmaps.presentation.enums.NetworkError
 import ru.krirll.optimalmaps.presentation.enums.PointZoom
 import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
 import ru.krirll.optimalmaps.presentation.infoWindow.DefaultInfoWindow
@@ -77,6 +84,7 @@ class MapFragment : Fragment(), LocationListener {
         super.onViewCreated(view, savedInstanceState)
         getSavedValues(savedInstanceState)
         initMap()
+        setViewModelLocale()
         initSearchButton()
         initLocationManager()
         initCurrentLocationButton()
@@ -88,6 +96,11 @@ class MapFragment : Fragment(), LocationListener {
         super.onResume()
     }
 
+    private fun setViewModelLocale() {
+        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        mapViewModel.setLocale(Locale.getLocale(currentLocale))
+    }
+
     private fun getSavedValues(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
             //get saved title of alert dialog
@@ -97,20 +110,21 @@ class MapFragment : Fragment(), LocationListener {
             isFixedCurrentLocation = savedInstanceState.getBoolean(IS_FIXED_CURRENT_LOCATION)
             //get current map center and zoom
             currentMapCenter =
-                savedInstanceState.getDoubleArray(CURRENT_MAP_CENTER)?.let { GeoPoint(it[0], it[1]) }
+                savedInstanceState.getDoubleArray(CURRENT_MAP_CENTER)
+                    ?.let { GeoPoint(it[0], it[1]) }
             currentMapZoom = savedInstanceState.getDouble(CURRENT_MAP_ZOOM)
         }
     }
 
-    private fun startShowCurrentLocationProgress() {
-        viewBinding.currentLocationProgress.visibility = View.VISIBLE
+    private fun startProgress() {
+        viewBinding.progress.visibility = View.VISIBLE
     }
 
-    private fun stopShowCurrentLocationProgress() {
-        viewBinding.currentLocationProgress.visibility = View.GONE
+    private fun stopProgress() {
+        viewBinding.progress.visibility = View.GONE
     }
 
-    private fun isCurrentLocationProgressShowing() = viewBinding.currentLocationProgress.isShown
+    private fun isCurrentLocationProgressShowing() = viewBinding.progress.isShown
 
     private fun initLocationManager() {
         locationManager =
@@ -119,7 +133,7 @@ class MapFragment : Fragment(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         if (isCurrentLocationProgressShowing())
-            stopShowCurrentLocationProgress()
+            stopProgress()
         val geoPoint = GeoPoint(location.latitude, location.longitude)
         val currentPositionOverlay = getMarkerById(CURRENT_LOCATION_MARKER)
         if (currentPositionOverlay != null)
@@ -128,7 +142,7 @@ class MapFragment : Fragment(), LocationListener {
             setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
         addMarkerOnMap(
             geoPoint,
-            PointZoom.SMALL_2.zoom,
+            PointZoom.SMALL_1.zoom,
             CURRENT_LOCATION_MARKER,
             CURRENT_LOCATION_MARKER,
             isFixedCurrentLocation ?: false
@@ -170,7 +184,7 @@ class MapFragment : Fragment(), LocationListener {
             )
             changeLocationButtonIcon(ENABLED)
             if (isFixedCurrentLocation == true && getMarkerById(DEFAULT_ID) == null)
-                startShowCurrentLocationProgress()
+                startProgress()
         }
     }
 
@@ -222,7 +236,7 @@ class MapFragment : Fragment(), LocationListener {
                         setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
                     } else {
                         tryUpdateLocationManager()
-                        startShowCurrentLocationProgress()
+                        startProgress()
                     }
                     isFixedCurrentLocation = true
                 } else
@@ -382,13 +396,20 @@ class MapFragment : Fragment(), LocationListener {
             )
             if (idString != CURRENT_LOCATION_MARKER)
                 showInfoWindow()
+            else {
+                setOnMarkerClickListener { _, _ ->
+                    startProgress()
+                    mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
+                    true
+                }
+            }
         }
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
     }
 
     //observe MapFragmentViewModel LiveData
     private fun observeViewModel() {
-        //observe points
+        //observe point
         mapViewModel.point.observe(viewLifecycleOwner) { point ->
             //set point on map
             viewBinding.map.apply {
@@ -403,6 +424,40 @@ class MapFragment : Fragment(), LocationListener {
                     isFixedCurrentLocation = false
                 }
             }
+        }
+        //observe current location title
+        mapViewModel.currentLocationPointTitle.observe(viewLifecycleOwner) { title ->
+            if (title != null) {
+                getMarkerById(CURRENT_LOCATION_MARKER)?.let {
+                    //set title and open info window
+                    it.title = title
+                    it.showInfoWindow()
+                    stopProgress()
+                }
+            }
+        }
+        lifecycleScope.launchWhenStarted {
+            ////collect errors
+            mapViewModel.networkError.collect {
+                val message = when (it) {
+                    NetworkError.NO_INTERNET -> getString(R.string.no_internet)
+                    NetworkError.NO_INFO_ABOUT_POINT -> getString(R.string.no_info_about_point)
+                    else -> ""
+                }
+                createSnackbar(message)
+            }
+        }
+    }
+
+    private fun createSnackbar(message: String) {
+        view?.let {
+            Snackbar.make(
+                it,
+                message,
+                Snackbar.LENGTH_LONG
+            ).apply {
+                animationMode = Snackbar.ANIMATION_MODE_SLIDE
+            }.show()
         }
     }
 
@@ -448,7 +503,7 @@ class MapFragment : Fragment(), LocationListener {
                         if (isFixedCurrentLocation == true) {
                             setColor(R.color.black, viewBinding.currentLocationButton.icon)
                             isFixedCurrentLocation = false
-                            stopShowCurrentLocationProgress()
+                            stopProgress()
                         }
                     } else
                         if (currentMapState.zoomLevelDouble != currentMapZoom)
@@ -456,6 +511,18 @@ class MapFragment : Fragment(), LocationListener {
                 }
                 false
             }
+            //set on long click listener with search
+            val eventReceiver =
+                object : MapEventsReceiver {
+                    override fun singleTapConfirmedHelper(point: GeoPoint?) = false
+                    override fun longPressHelper(point: GeoPoint?): Boolean {
+                        point?.let {
+                            mapViewModel.getPointByLatLon(it.latitude, it.longitude, false)
+                        }
+                        return false
+                    }
+                }
+            overlays.add(object : MapEventsOverlay(eventReceiver) { /*body is empty*/ })
         }
     }
 
