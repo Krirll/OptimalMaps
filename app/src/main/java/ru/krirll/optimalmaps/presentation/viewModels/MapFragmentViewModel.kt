@@ -16,8 +16,7 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
 
     //init repository and use case
     private val repository: PointRepositoryImpl = PointRepositoryImpl(app)
-    private val getSearchByQueryUseCase: GetPointsByQueryUseCase =
-        GetPointsByQueryUseCase(repository)
+    private val getSearchByQueryUseCase: GetPointsByQueryUseCase = GetPointsByQueryUseCase(repository)
 
     //channel for sending errors
     private var _networkError = Channel<NetworkError>()
@@ -52,7 +51,7 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun getPointByLonLat(lat: Double, lon: Double, isCurrentLocation: Boolean) {
+    fun getPointByLatLon(lat: Double, lon: Double, isCurrentLocation: Boolean) {
         viewModelScope.launch {
             val result = getSearchByQueryUseCase.invoke(
                 "$lat $lon",
