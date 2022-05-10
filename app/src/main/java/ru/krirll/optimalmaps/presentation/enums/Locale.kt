@@ -8,6 +8,6 @@ enum class Locale(private val locale: String) {
         fun getLocale(str: String) =
             values().firstOrNull {
                 it.locale == str
-            }?.locale ?: ""
+            }?.locale ?: EN.locale
     }
 }
