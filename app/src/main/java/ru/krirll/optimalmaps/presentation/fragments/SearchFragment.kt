@@ -73,7 +73,7 @@ class SearchFragment : Fragment() {
             pointListAdapter = PointListAdapter().apply {
                 setOnPointItemClickListener {
                     //set point in mapViewModel and go back to the MapFragment
-                    mapViewModel.setMapPoint(it)
+                    mapViewModel.setPoint(it)
                     searchViewModel.savePointItem(it)
                     findNavController().popBackStack()
                 }
