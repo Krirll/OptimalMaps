@@ -34,6 +34,7 @@ import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
 import ru.krirll.optimalmaps.presentation.enums.PointZoom
 import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
+import ru.krirll.optimalmaps.presentation.infoWindow.DefaultInfoWindow
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 
 class MapFragment : Fragment(), LocationListener {
@@ -129,6 +130,7 @@ class MapFragment : Fragment(), LocationListener {
             geoPoint,
             PointZoom.SMALL_2.zoom,
             CURRENT_LOCATION_MARKER,
+            CURRENT_LOCATION_MARKER,
             isFixedCurrentLocation ?: false
         )
     }
@@ -167,7 +169,7 @@ class MapFragment : Fragment(), LocationListener {
                 this
             )
             changeLocationButtonIcon(ENABLED)
-            if (isFixedCurrentLocation == true && getMarkerById(EMPTY_ID) == null)
+            if (isFixedCurrentLocation == true && getMarkerById(DEFAULT_ID) == null)
                 startShowCurrentLocationProgress()
         }
     }
@@ -218,8 +220,7 @@ class MapFragment : Fragment(), LocationListener {
                             animateTo(GeoPoint(marker.position))
                         }
                         setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
-                    }
-                    else {
+                    } else {
                         tryUpdateLocationManager()
                         startShowCurrentLocationProgress()
                     }
@@ -281,7 +282,11 @@ class MapFragment : Fragment(), LocationListener {
             startActivity(
                 Intent(
                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", requireActivity().packageName, null) //uri of this application settings
+                    Uri.fromParts(
+                        "package",
+                        requireActivity().packageName,
+                        null
+                    ) //uri of this application settings
                 )
             )
         }
@@ -343,6 +348,7 @@ class MapFragment : Fragment(), LocationListener {
         geoPoint: GeoPoint,
         pointZoom: Double,
         idString: String,
+        text: String,
         shouldAnimate: Boolean = false
     ) {
         //create marker
@@ -356,11 +362,26 @@ class MapFragment : Fragment(), LocationListener {
                             setColor(R.color.purple_500, this)
                         }
                     }
-                    EMPTY_ID -> null
+                    DEFAULT_ID -> null
                     else -> null
                 }
+            title = text
             icon = drawable
             id = idString
+            infoWindow = DefaultInfoWindow.create(
+                R.layout.default_info_window,
+                viewBinding.map,
+                idString,
+                { id ->
+                    viewBinding.map.overlays.apply {
+                        remove(getMarkerById(id).apply { closeInfoWindow() })
+                    }
+                    mapViewModel.removePoint()
+                },
+                { getMarkerById(id)?.closeInfoWindow() }
+            )
+            if (idString != CURRENT_LOCATION_MARKER)
+                showInfoWindow()
         }
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
     }
@@ -371,13 +392,16 @@ class MapFragment : Fragment(), LocationListener {
         mapViewModel.point.observe(viewLifecycleOwner) { point ->
             //set point on map
             viewBinding.map.apply {
-                addMarkerOnMap(
-                    GeoPoint(point.lat, point.lon),
-                    point.zoom,
-                    EMPTY_ID,
-                    true
-                )
-                isFixedCurrentLocation = false
+                if (point != null) {
+                    addMarkerOnMap(
+                        GeoPoint(point.lat, point.lon),
+                        point.zoom,
+                        DEFAULT_ID,
+                        point.text,
+                        true
+                    )
+                    isFixedCurrentLocation = false
+                }
             }
         }
     }
@@ -450,10 +474,16 @@ class MapFragment : Fragment(), LocationListener {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable(TITLE, alertDialogTitle) //save title of current alert dialog
-        outState.putBoolean(IS_FIXED_CURRENT_LOCATION, isFixedCurrentLocation ?: false) //save current location state
+        outState.putBoolean(
+            IS_FIXED_CURRENT_LOCATION,
+            isFixedCurrentLocation ?: false
+        ) //save current location state
         outState.putDoubleArray(
             CURRENT_MAP_CENTER,
-            doubleArrayOf(currentMapCenter?.latitude ?: 0.0, currentMapCenter?.longitude ?: 0.0) //save current map center
+            doubleArrayOf(
+                currentMapCenter?.latitude ?: 0.0,
+                currentMapCenter?.longitude ?: 0.0
+            ) //save current map center
         )
         outState.putDouble(CURRENT_MAP_ZOOM, currentMapZoom ?: DEFAULT_ZOOM) //save current map zoom
         super.onSaveInstanceState(outState)
@@ -467,10 +497,10 @@ class MapFragment : Fragment(), LocationListener {
         private const val TITLE = "TITLE"
         private const val ENABLED = true
         private const val DISABLED = false
-        private const val CURRENT_LOCATION_MARKER = "CURRENT_LOCATION_MARKER"
-        private const val EMPTY_ID = ""
         private const val IS_FIXED_CURRENT_LOCATION = "IS_FIXED_CURRENT_LOCATION"
         private const val CURRENT_MAP_CENTER = "CURRENT_MAP_CENTER"
         private const val CURRENT_MAP_ZOOM = "CURRENT_MAP_ZOOM"
+        const val CURRENT_LOCATION_MARKER = "CURRENT_LOCATION_MARKER"
+        const val DEFAULT_ID = ""
     }
 }
