@@ -13,8 +13,8 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentSearchBinding
-import ru.krirll.optimalmaps.presentation.adapters.PointItemViewType
-import ru.krirll.optimalmaps.presentation.adapters.PointListAdapter
+import ru.krirll.optimalmaps.presentation.adapters.searchAdapter.PointItemViewType
+import ru.krirll.optimalmaps.presentation.adapters.searchAdapter.PointListAdapter
 import ru.krirll.optimalmaps.presentation.enums.Locale
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel

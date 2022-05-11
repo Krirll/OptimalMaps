@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.adapters
+package ru.krirll.optimalmaps.presentation.adapters.searchAdapter
 
 import androidx.recyclerview.widget.DiffUtil
 import ru.krirll.optimalmaps.domain.model.PointItem
