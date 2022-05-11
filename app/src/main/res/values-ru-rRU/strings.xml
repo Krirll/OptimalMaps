@@ -17,4 +17,9 @@
     <string name="internet">Интернет</string>
     <string name="no_info_about_point">Нет информации по заданной точке</string>
     <string name="your_position">Ваше местоположение</string>
+    <string name="add_desc">Нажмите на кнопку справа для добавления</string>
+    <string name="start">старт</string>
+    <string name="save">сохранить</string>
+    <string name="show">показать</string>
+    <string name="saved_routes">Сохраненные маршруты</string>
 </resources>
