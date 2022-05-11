@@ -93,8 +93,10 @@ class SearchFragmentViewModel(
                     )
                     lastQuery = query
                     _pointItemList.value = result
-                } else
+                } else {
+                    _pointItemList.value = listOf()
                     loadSearchHistory()
+                }
                 delay(700)
             }
         }
