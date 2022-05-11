@@ -13,7 +13,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
@@ -139,11 +138,11 @@ class MapFragment : Fragment(), LocationListener {
         if (isCurrentLocationProgressShowing())
             stopProgress()
         val geoPoint = GeoPoint(location.latitude, location.longitude)
-        val currentPositionOverlay = getMarkerById(CURRENT_LOCATION_MARKER)
-        if (currentPositionOverlay != null) {
-            if (currentPositionOverlay.isInfoWindowShown)
-                currentPositionOverlay.closeInfoWindow()
-            viewBinding.map.overlays.remove(currentPositionOverlay)
+        val currentPositionMarker = getMarkerById(CURRENT_LOCATION_MARKER)
+        if (currentPositionMarker != null) {
+            if (currentPositionMarker.isInfoWindowShown)
+                currentPositionMarker.closeInfoWindow()
+            viewBinding.map.overlays.remove(currentPositionMarker)
         }
         if (isFixedCurrentLocation == true)
             setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
@@ -414,13 +413,14 @@ class MapFragment : Fragment(), LocationListener {
             if (idString != CURRENT_LOCATION_MARKER)
                 showInfoWindow()
             else {
-                setOnMarkerClickListener { _, _ ->
-                    if (title != "")
-                        showInfoWindow()
+                setOnMarkerClickListener { marker, _ ->
+                    if (marker.title != "" && !marker.isInfoWindowShown)
+                        marker.showInfoWindow()
                     else {
                         startProgress()
                         mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
                     }
+                    viewBinding.map.controller.animateTo(GeoPoint(marker.position))
                     isCurrentLocationInfoWindowOpened = true
                     true
                 }
@@ -516,25 +516,18 @@ class MapFragment : Fragment(), LocationListener {
             //set current map center
             if (currentMapCenter != null) setExpectedCenter(currentMapCenter)
             //set on touch listener
-            setOnTouchListener { view, event ->
-                if (event.action != MotionEvent.ACTION_UP && event.action != MotionEvent.ACTION_DOWN) {
-                    val currentMapState = view as MapView
-                    if (!currentMapState.isAnimating) {
-                        if (currentMapState.mapCenter.latitude != currentMapCenter?.latitude
-                            && currentMapState.mapCenter.longitude != currentMapCenter?.longitude
-                        ) {
-                            currentMapCenter = GeoPoint(
-                                currentMapState.mapCenter.latitude,
-                                currentMapState.mapCenter.longitude
-                            )
-                            if (isFixedCurrentLocation == true) {
-                                setColor(R.color.black, viewBinding.currentLocationButton.icon)
-                                isFixedCurrentLocation = false
-                                stopProgress()
-                            }
-                        } else
-                            if (currentMapState.zoomLevelDouble != currentMapZoom)
-                                currentMapZoom = currentMapState.zoomLevelDouble
+            setOnTouchListener { view, _ ->
+                val currentMap = view as MapView
+                if (!currentMap.isAnimating && currentMap.isInTouchMode) {
+                    currentMapCenter = GeoPoint(
+                        currentMap.mapCenter.latitude,
+                        currentMap.mapCenter.longitude
+                    )
+                    currentMapZoom = currentMap.zoomLevelDouble
+                    if (isFixedCurrentLocation == true) {
+                        setColor(R.color.black, viewBinding.currentLocationButton.icon)
+                        isFixedCurrentLocation = false
+                        stopProgress()
                     }
                 }
                 false
