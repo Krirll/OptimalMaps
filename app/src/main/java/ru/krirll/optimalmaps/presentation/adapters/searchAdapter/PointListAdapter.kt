@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.ListAdapter
 import ru.krirll.optimalmaps.databinding.PointDefaultItemBinding
 import ru.krirll.optimalmaps.databinding.PointHistoryItemBinding
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.presentation.adapters.viewHolder.PointItemViewHolder
 
 class PointListAdapter : ListAdapter<PointItem, PointItemViewHolder>(PointItemDiffCallBack()) {
 
