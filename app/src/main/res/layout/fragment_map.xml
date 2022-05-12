@@ -40,7 +40,7 @@
         app:iconTint="@color/black" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/directionButton"
+        android:id="@+id/routeButton"
         android:layout_width="65dp"
         android:layout_height="75dp"
         android:layout_gravity="bottom|end"
