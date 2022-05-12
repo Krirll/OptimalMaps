@@ -25,11 +25,17 @@
             app:iconSize="35dp"
             app:iconTint="@color/black" />
 
-        <include layout="@layout/point_start_item" />
+        <include
+            android:id="@+id/start_layout"
+            layout="@layout/start_point" />
 
-        <include layout="@layout/point_additional_item" />
+        <include
+            android:id="@+id/additional_layout"
+            layout="@layout/additional_point" />
 
-        <include layout="@layout/point_finish_item" />
+        <include
+            android:id="@+id/finish_layout"
+            layout="@layout/finish_point" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/startButton"
@@ -56,16 +62,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:padding="10dp"
             android:layout_marginEnd="10dp"
             android:backgroundTint="@color/black"
+            android:padding="10dp"
             android:text="@string/show_saved_routes"
             android:textAlignment="center"
             android:textColor="@color/white"
             app:cornerRadius="20dp" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+            android:id="@+id/savedRoutesRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone" />
