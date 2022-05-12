@@ -16,10 +16,28 @@
             app:exitAnim="@android:anim/fade_out"
             app:popExitAnim="@android:anim/fade_out"
             app:popUpTo="@id/mapFragment" />
+        <action
+            android:id="@+id/action_mapFragment_to_routeConstructorFragment"
+            app:destination="@id/routeConstructorFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/mapFragment" />
     </fragment>
     <fragment
         android:id="@+id/searchFragment"
         android:name="ru.krirll.optimalmaps.presentation.fragments.SearchFragment"
         android:label="fragment_search"
         tools:layout="@layout/fragment_search" />
+    <fragment
+        android:id="@+id/routeConstructorFragment"
+        android:name="ru.krirll.optimalmaps.presentation.fragments.RouteConstructorFragment"
+        android:label="fragment_route_constructor"
+        tools:layout="@layout/fragment_route_constructor" >
+        <action
+            android:id="@+id/action_routeConstructorFragment_to_searchFragment"
+            app:destination="@id/searchFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/routeConstructorFragment" />
+    </fragment>
 </navigation>
