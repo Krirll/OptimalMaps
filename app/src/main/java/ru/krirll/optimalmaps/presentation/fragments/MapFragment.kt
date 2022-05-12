@@ -87,6 +87,7 @@ class MapFragment : Fragment(), LocationListener {
         initMap()
         setViewModelLocale()
         initSearchButton()
+        initRouteButton()
         initLocationManager()
         initCurrentLocationButton()
         observeViewModel()
@@ -95,6 +96,13 @@ class MapFragment : Fragment(), LocationListener {
     override fun onResume() {
         tryUpdateLocationManager()
         super.onResume()
+    }
+
+    private fun initRouteButton() {
+        //open route constructor
+        viewBinding.routeButton.setOnClickListener {
+            findNavController().navigate(R.id.action_mapFragment_to_routeConstructorFragment)
+        }
     }
 
     private fun setViewModelLocale() {
