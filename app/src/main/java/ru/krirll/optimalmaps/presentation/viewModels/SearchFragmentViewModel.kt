@@ -64,11 +64,11 @@ class SearchFragmentViewModel(
             _pointHistoryList.postValue(_pointHistoryList.value)
     }
 
-    fun savePointItem(item: PointItem) {
+    fun savePointItem(index: Int) {
         viewModelScope.launch {
             _pointItemList.value?.let { list ->
                 if (list.isNotEmpty())
-                    savePointItemUseCase.invoke(list.first { it == item })
+                    savePointItemUseCase.invoke(list[index])
             }
         }
     }
@@ -84,15 +84,17 @@ class SearchFragmentViewModel(
         searchQueryChannel.receiveAsFlow().collect { query ->
             delay(300)
             if (searchQueryChannel.isEmpty) {
-                if (query != "" && query != lastQuery) {
-                    val result = getSearchByQueryUseCase.invoke(
-                        query,
-                        locale,
-                        { onError(NetworkError.INCORRECT_QUERY) },
-                        { onError(NetworkError.NO_INTERNET) }
-                    )
-                    lastQuery = query
-                    _pointItemList.value = result
+                if (query != "") {
+                    if (query != lastQuery) {
+                        val result = getSearchByQueryUseCase.invoke(
+                            query,
+                            locale,
+                            { onError(NetworkError.INCORRECT_QUERY) },
+                            { onError(NetworkError.NO_INTERNET) }
+                        )
+                        lastQuery = query
+                        _pointItemList.value = result
+                    }
                 } else {
                     _pointItemList.value = listOf()
                     loadSearchHistory()

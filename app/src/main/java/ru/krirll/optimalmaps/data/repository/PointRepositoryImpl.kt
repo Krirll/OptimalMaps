@@ -8,14 +8,17 @@ import ru.krirll.optimalmaps.data.database.SearchHistoryDatabase
 import ru.krirll.optimalmaps.data.mapper.PointMapper
 import ru.krirll.optimalmaps.data.network.ApiFactory
 import ru.krirll.optimalmaps.data.network.SearchApiService
-import ru.krirll.optimalmaps.domain.repository.PointRepository
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.domain.repository.PointRepository
+import ru.krirll.optimalmaps.utils.OptimalRouteSearchUtil
 
 class PointRepositoryImpl(
     private val application: Application,
     private val mapper: PointMapper = PointMapper(),
-    private val searchHistoryDao: SearchHistoryDao = SearchHistoryDatabase.getInstance(application).searchDao(),
-    private val apiService: SearchApiService = ApiFactory.searchApiService
+    private val searchHistoryDao: SearchHistoryDao = SearchHistoryDatabase.getInstance(application)
+        .searchDao(),
+    private val apiService: SearchApiService = ApiFactory.searchApiService,
+    private val optimalRouteSearchUtil: OptimalRouteSearchUtil = OptimalRouteSearchUtil(application.applicationContext)
 ) : PointRepository {
 
     override suspend fun getSearchResult(
@@ -45,10 +48,18 @@ class PointRepositoryImpl(
         }
 
     override suspend fun savePointItem(item: PointItem) {
-        if (searchHistoryDao.checkExist(item.text) == 0) {
-            if (searchHistoryDao.getCount() == 20)
-                searchHistoryDao.deleteEarliestPointItem()
-            searchHistoryDao.insertPointItem(mapper.mapEntityToDbModel(item))
+        searchHistoryDao.apply {
+            if (!checkExist(item.text)) {
+                if (getCount() == 20)
+                    deleteEarliestPointItem()
+                insertPointItem(mapper.mapEntityToDbModel(item))
+            }
         }
     }
+
+    override suspend fun createRoute(
+        points: List<PointItem>,
+        withEndPoint: Boolean,
+        onErrorEventListener: (Int) -> Unit
+    ) = optimalRouteSearchUtil.getRoute(points, withEndPoint, onErrorEventListener)
 }

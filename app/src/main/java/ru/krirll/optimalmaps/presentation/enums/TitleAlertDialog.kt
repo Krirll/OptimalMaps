@@ -8,5 +8,5 @@ import ru.krirll.optimalmaps.R
 enum class TitleAlertDialog(val stringRes: Int) : Parcelable {
     LOCATION_PERMISSION_DENIED(R.string.title_location_permission),
     GEO_POSITION_DISABLED(R.string.title_geo_position),
-    INTERNET(R.string.internet)
+    CHANGE_LOCATION_MODE(R.string.location_mode)
 }

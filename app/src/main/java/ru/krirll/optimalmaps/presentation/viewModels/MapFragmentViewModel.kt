@@ -7,10 +7,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
 import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
+import ru.krirll.optimalmaps.presentation.enums.PointMode
 
 class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -27,18 +29,42 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
     val currentLocationPointTitle: MutableLiveData<String?>
         get() = _currentLocationPointTitle
 
-    private var _point = MutableLiveData<PointItem?>()
-    val point: MutableLiveData<PointItem?>
+    private var _point = MutableLiveData<Pair<PointMode?, PointItem?>>()
+    val point: MutableLiveData<Pair<PointMode?, PointItem?>>
         get() = _point
+
+    private var _route = MutableLiveData<Road?>()
+    val route: MutableLiveData<Road?>
+        get() = _route
+
+    private var _listPoints = MutableLiveData<List<PointItem>?>()
+    val listPoints: MutableLiveData<List<PointItem>?>
+        get() = _listPoints
 
     private var locale: String = ""
 
-    fun setPoint(point: PointItem) {
-        _point.value = point
+    fun setRoute(route: Road) {
+        _route.value = route
+    }
+
+    fun removeRoute() {
+        _route.value = null
+    }
+
+    fun setListPoints(list: List<PointItem>) {
+        _listPoints.value = list
+    }
+
+    fun removeListPoints() {
+        _listPoints.value = null
+    }
+
+    fun setPoint(point: PointItem, mode: PointMode) {
+        _point.value = Pair(mode, point)
     }
 
     fun removePoint() {
-        _point.postValue(null)
+        _point.postValue(Pair(null, null))
     }
 
     fun setLocale(str: String) {
@@ -51,7 +77,7 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun getPointByLatLon(lat: Double, lon: Double, isCurrentLocation: Boolean) {
+    fun getPointByLatLon(lat: Double, lon: Double, mode: PointMode?) {
         viewModelScope.launch {
             val result = getSearchByQueryUseCase.invoke(
                 "$lat $lon",
@@ -60,10 +86,17 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
                 { onError(NetworkError.NO_INTERNET) }
             )
             if (result.isNotEmpty())
-                if (!isCurrentLocation)
-                    point.value = result.map { PointItem(it.zoom, it.text, false, lat, lon) }[0]
-                else
-                    currentLocationPointTitle.value = result.first().text
+                when (mode) {
+                    PointMode.CURRENT_LOCATION_POINT ->
+                        currentLocationPointTitle.value = result.first().text
+                    else -> {
+                        point.value =
+                            Pair(
+                                mode,
+                                result.map { PointItem(it.zoom, it.text, false, lat, lon) }[0]
+                            )
+                    }
+                }
         }
     }
 }
