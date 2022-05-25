@@ -21,12 +21,18 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getColor
 import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import org.osmdroid.api.IGeoPoint
+import org.osmdroid.bonuspack.routing.Road
+import org.osmdroid.bonuspack.routing.RoadManager
+import org.osmdroid.bonuspack.routing.RoadNode
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -35,12 +41,10 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
-import ru.krirll.optimalmaps.presentation.enums.Locale
-import ru.krirll.optimalmaps.presentation.enums.NetworkError
-import ru.krirll.optimalmaps.presentation.enums.PointZoom
-import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
+import ru.krirll.optimalmaps.presentation.enums.*
 import ru.krirll.optimalmaps.presentation.infoWindow.DefaultInfoWindow
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 
@@ -63,6 +67,7 @@ class MapFragment : Fragment(), LocationListener {
     private var alertDialogTitle: TitleAlertDialog? = null
 
     private var locationManager: LocationManager? = null
+    private var isCurrentLocationInfoWindowOpened = false
 
     private var currentMapCenter: IGeoPoint? = null //for saving center
     private var currentMapZoom: Double? = null         //for saving zoom
@@ -86,6 +91,8 @@ class MapFragment : Fragment(), LocationListener {
         initMap()
         setViewModelLocale()
         initSearchButton()
+        initRouteButton()
+        initCancelButton()
         initLocationManager()
         initCurrentLocationButton()
         observeViewModel()
@@ -94,6 +101,21 @@ class MapFragment : Fragment(), LocationListener {
     override fun onResume() {
         tryUpdateLocationManager()
         super.onResume()
+    }
+
+    private fun initRouteButton() {
+        //open route constructor
+        viewBinding.routeButton.setOnClickListener {
+            findNavController().navigate(R.id.action_mapFragment_to_routeConstructorFragment)
+        }
+    }
+
+    private fun initCancelButton() {
+        viewBinding.cancelButton.setOnClickListener {
+            mapViewModel.removeRoute()
+            mapViewModel.removeListPoints()
+            findNavController().navigate(R.id.action_mapFragment_to_routeConstructorFragment)
+        }
     }
 
     private fun setViewModelLocale() {
@@ -113,6 +135,8 @@ class MapFragment : Fragment(), LocationListener {
                 savedInstanceState.getDoubleArray(CURRENT_MAP_CENTER)
                     ?.let { GeoPoint(it[0], it[1]) }
             currentMapZoom = savedInstanceState.getDouble(CURRENT_MAP_ZOOM)
+            //get current location info window state
+            isCurrentLocationInfoWindowOpened = savedInstanceState.getBoolean(IS_OPENED, false)
         }
     }
 
@@ -124,27 +148,27 @@ class MapFragment : Fragment(), LocationListener {
         viewBinding.progress.visibility = View.GONE
     }
 
-    private fun isCurrentLocationProgressShowing() = viewBinding.progress.isShown
-
     private fun initLocationManager() {
         locationManager =
             requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onLocationChanged(location: Location) {
-        if (isCurrentLocationProgressShowing())
-            stopProgress()
+        stopProgress()
         val geoPoint = GeoPoint(location.latitude, location.longitude)
-        val currentPositionOverlay = getMarkerById(CURRENT_LOCATION_MARKER)
-        if (currentPositionOverlay != null)
-            viewBinding.map.overlays.remove(currentPositionOverlay)
+        val currentPositionMarker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)
+        if (currentPositionMarker != null) {
+            if (currentPositionMarker.isInfoWindowShown)
+                currentPositionMarker.closeInfoWindow()
+            viewBinding.map.overlays.remove(currentPositionMarker)
+        }
         if (isFixedCurrentLocation == true)
             setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
         addMarkerOnMap(
             geoPoint,
             PointZoom.SMALL_1.zoom,
-            CURRENT_LOCATION_MARKER,
-            CURRENT_LOCATION_MARKER,
+            PointId.CURRENT_LOCATION_ID.value,
+            "",
             isFixedCurrentLocation ?: false
         )
     }
@@ -159,6 +183,11 @@ class MapFragment : Fragment(), LocationListener {
         changeLocationButtonIcon(ENABLED)
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+        //this method must me override because minSDK is 22
+    }
+
     private fun initCurrentLocationButton() {
         viewBinding.currentLocationButton.setOnClickListener {
             checkLocationPermissionAndRequestUpdates()
@@ -167,7 +196,7 @@ class MapFragment : Fragment(), LocationListener {
 
     @SuppressLint("MissingPermission")
     private fun tryUpdateLocationManager() {
-        if (checkSelfPermissionLocation() && isNetworkProvideEnabled() && isGpsProvideEnabled()) {
+        if (checkSelfPermissionLocation() && getLocationMode() == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
             alertDialogTitle = null
             locationManager?.removeUpdates(this)
             locationManager?.requestLocationUpdates(
@@ -183,7 +212,7 @@ class MapFragment : Fragment(), LocationListener {
                 this
             )
             changeLocationButtonIcon(ENABLED)
-            if (isFixedCurrentLocation == true && getMarkerById(DEFAULT_ID) == null)
+            if (isFixedCurrentLocation == true && getMarkerById(PointId.DEFAULT_ID.value) == null)
                 startProgress()
         }
     }
@@ -195,7 +224,7 @@ class MapFragment : Fragment(), LocationListener {
         }?.let { it as Marker }
 
     private fun changeCurrentLocationMarkerColor(color: Int) {
-        getMarkerById(CURRENT_LOCATION_MARKER)?.let {
+        getMarkerById(PointId.CURRENT_LOCATION_ID.value)?.let {
             setColor(color, it.icon)
         }
         viewBinding.map.invalidate()
@@ -216,21 +245,19 @@ class MapFragment : Fragment(), LocationListener {
         drawable?.setTint(getColor(requireContext(), color))
     }
 
-    private fun isGpsProvideEnabled() =
-        locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == ENABLED
-
-    private fun isNetworkProvideEnabled() =
-        locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == ENABLED
+    private fun getLocationMode(): Int =
+        Settings.Secure.getInt(requireActivity().contentResolver, Settings.Secure.LOCATION_MODE)
 
     private fun checkLocationPermissionAndRequestUpdates() {
         if (checkPermission()) {
-            if (isGpsProvideEnabled()) {
-                if (isNetworkProvideEnabled()) {
+            when (getLocationMode()) {
+                Settings.Secure.LOCATION_MODE_OFF -> createAlertDialogGeoPositionDisabled()
+                Settings.Secure.LOCATION_MODE_HIGH_ACCURACY -> {
                     alertDialogTitle = null
-                    val marker = getMarkerById(CURRENT_LOCATION_MARKER)
+                    val marker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)
                     if (marker != null) {
                         viewBinding.map.controller.apply {
-                            setZoom(PointZoom.SMALL_2.zoom)
+                            setZoom(PointZoom.SMALL_1.zoom)
                             animateTo(GeoPoint(marker.position))
                         }
                         setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
@@ -239,10 +266,11 @@ class MapFragment : Fragment(), LocationListener {
                         startProgress()
                     }
                     isFixedCurrentLocation = true
-                } else
-                    createAlertDialogNoInternet()
-            } else
-                createAlertDialogGeoPositionDisabled()
+                }
+                else -> {
+                    createAlertDialogChangeLocationMode()
+                }
+            }
         }
     }
 
@@ -276,16 +304,18 @@ class MapFragment : Fragment(), LocationListener {
             when (alertDialogTitle) {
                 TitleAlertDialog.GEO_POSITION_DISABLED -> createAlertDialogGeoPositionDisabled()
                 TitleAlertDialog.LOCATION_PERMISSION_DENIED -> createAlertDialogLocationPermissionDenied()
-                TitleAlertDialog.INTERNET -> createAlertDialogNoInternet()
+                TitleAlertDialog.CHANGE_LOCATION_MODE -> createAlertDialogChangeLocationMode()
                 else -> throw RuntimeException("Unknown title $alertDialogTitle")
             }
     }
 
-    private fun createAlertDialogNoInternet() {
+    private fun createAlertDialogChangeLocationMode() {
         createAlertDialog(
-            TitleAlertDialog.INTERNET,
-            getString(R.string.no_internet)
-        )
+            TitleAlertDialog.CHANGE_LOCATION_MODE,
+            getString(R.string.change_location_mode)
+        ) {
+            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+        }
     }
 
     private fun createAlertDialogLocationPermissionDenied() {
@@ -328,6 +358,7 @@ class MapFragment : Fragment(), LocationListener {
                 .setCancelable(false)
                 .setPositiveButton(R.string.ok) { dialog, _ ->
                     dialog.dismiss()
+                    alertDialogTitle = null
                     positiveFunction?.invoke()
                 }
                 .setNegativeButton(R.string.cancel) { dialog, _ ->
@@ -371,35 +402,60 @@ class MapFragment : Fragment(), LocationListener {
             //set icon by id
             val drawable =
                 when (idString) {
-                    CURRENT_LOCATION_MARKER -> {
+                    PointId.CURRENT_LOCATION_ID.value -> {
                         getDrawable(requireContext(), R.drawable.icon_current_location).apply {
                             setColor(R.color.purple_500, this)
                         }
                     }
-                    DEFAULT_ID -> null
+                    PointId.DEFAULT_ID.value -> null
                     else -> null
                 }
             title = text
             icon = drawable
             id = idString
             infoWindow = DefaultInfoWindow.create(
-                R.layout.default_info_window,
+                R.layout.point_info_window,
                 viewBinding.map,
                 idString,
+                //On delete event
                 { id ->
                     viewBinding.map.overlays.apply {
                         remove(getMarkerById(id).apply { closeInfoWindow() })
                     }
                     mapViewModel.removePoint()
                 },
-                { getMarkerById(id)?.closeInfoWindow() }
+                //On hide event
+                {
+                    getMarkerById(id)?.closeInfoWindow()
+                    if (id == PointId.CURRENT_LOCATION_ID.value)
+                        isCurrentLocationInfoWindowOpened = false
+                },
+                null //no choose listener
             )
-            if (idString != CURRENT_LOCATION_MARKER)
+            if (isCurrentLocationInfoWindowOpened) {
+                startProgress()
+                mapViewModel.getPointByLatLon(
+                    geoPoint.latitude,
+                    geoPoint.longitude,
+                    PointMode.CURRENT_LOCATION_POINT
+                )
+            }
+            if (idString != PointId.CURRENT_LOCATION_ID.value)
                 showInfoWindow()
             else {
-                setOnMarkerClickListener { _, _ ->
-                    startProgress()
-                    mapViewModel.getPointByLatLon(geoPoint.latitude, geoPoint.longitude, true)
+                setOnMarkerClickListener { marker, _ ->
+                    if (marker.title != "" && !marker.isInfoWindowShown)
+                        marker.showInfoWindow()
+                    else {
+                        startProgress()
+                        mapViewModel.getPointByLatLon(
+                            geoPoint.latitude,
+                            geoPoint.longitude,
+                            PointMode.CURRENT_LOCATION_POINT
+                        )
+                    }
+                    viewBinding.map.controller.animateTo(GeoPoint(marker.position))
+                    isCurrentLocationInfoWindowOpened = true
                     true
                 }
             }
@@ -407,17 +463,60 @@ class MapFragment : Fragment(), LocationListener {
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
     }
 
+    private fun setVisibility(visibility: Int) {
+        viewBinding.apply {
+            searchButton.visibility = visibility
+            routeButton.visibility = visibility
+            currentLocationButton.visibility = visibility
+            cancelButton.visibility = if (visibility == View.GONE) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun showRoute(route: Road) {
+        for (i in 0 until route.mNodes.size) {
+            val node: RoadNode = route.mNodes[i]
+            if (node.mManeuverType == 24) {
+                val nodeMarker = Marker(viewBinding.map)
+                nodeMarker.position = node.mLocation
+                nodeMarker.icon = when (i) {
+                    0 -> getDrawable(requireContext(), R.drawable.icon_route)
+                    route.mNodes.size - 1 -> getDrawable(requireContext(), R.drawable.icon_finish)
+                    else -> getDrawable(requireContext(), R.drawable.icon_additional_point)
+                }.apply { this?.setTint(getColor(requireContext(), R.color.black)) }
+                nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                nodeMarker.setOnMarkerClickListener { _, _ -> true }
+                viewBinding.map.overlays.add(nodeMarker)
+            }
+        }
+        val over = RoadManager.buildRoadOverlay(route).apply { isGeodesic = true}
+        viewBinding.map.apply {
+            currentMapCenter = GeoPoint(over.bounds.centerLatitude, over.bounds.centerLongitude)
+            currentMapZoom = PointZoom.SMALL_3.zoom
+            controller.setCenter(currentMapCenter)
+            controller.setZoom(currentMapZoom!!)
+            overlays.add(over)
+            invalidate()
+        }
+
+    }
+
     //observe MapFragmentViewModel LiveData
     private fun observeViewModel() {
         //observe point
-        mapViewModel.point.observe(viewLifecycleOwner) { point ->
+        mapViewModel.point.observe(viewLifecycleOwner) { it ->
+            val point = it.second
+            stopProgress()
             //set point on map
             viewBinding.map.apply {
                 if (point != null) {
+                    getMarkerById(PointId.DEFAULT_ID.value)?.let {
+                        it.closeInfoWindow()
+                        it.remove(this)
+                    }
                     addMarkerOnMap(
                         GeoPoint(point.lat, point.lon),
                         point.zoom,
-                        DEFAULT_ID,
+                        PointId.DEFAULT_ID.value,
                         point.text,
                         true
                     )
@@ -428,7 +527,7 @@ class MapFragment : Fragment(), LocationListener {
         //observe current location title
         mapViewModel.currentLocationPointTitle.observe(viewLifecycleOwner) { title ->
             if (title != null) {
-                getMarkerById(CURRENT_LOCATION_MARKER)?.let {
+                getMarkerById(PointId.CURRENT_LOCATION_ID.value)?.let {
                     //set title and open info window
                     it.title = title
                     it.showInfoWindow()
@@ -436,15 +535,48 @@ class MapFragment : Fragment(), LocationListener {
                 }
             }
         }
-        lifecycleScope.launchWhenStarted {
-            ////collect errors
-            mapViewModel.networkError.collect {
-                val message = when (it) {
-                    NetworkError.NO_INTERNET -> getString(R.string.no_internet)
-                    NetworkError.NO_INFO_ABOUT_POINT -> getString(R.string.no_info_about_point)
-                    else -> ""
+        mapViewModel.route.observe(viewLifecycleOwner) { route ->
+            if (route != null) {
+                setVisibility(View.GONE)
+                showRoute(route)
+            }
+            else {
+                setVisibility(View.VISIBLE)
+                //delete all points from map
+                viewBinding.map.overlays.removeAll(
+                    viewBinding.map.overlays.filter { it is Marker && it.id == null }
+                        .onEach {
+                            if (it is Marker && it.isInfoWindowShown)
+                                it.closeInfoWindow()
+                        }
+                )
+                //delete route line from map
+                viewBinding.map.overlays.apply {
+                    remove(firstOrNull { it is Polyline })
                 }
-                createSnackbar(message)
+            }
+        }
+        mapViewModel.listPoints.observe(viewLifecycleOwner) { list ->
+            if (list == null)  {
+                //delete all points from map
+                viewBinding.map.overlays.removeAll(
+                    viewBinding.map.overlays.filter { it is Marker && it.id == null }
+                )
+                viewBinding.map.invalidate()
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                //collect errors
+                mapViewModel.networkError.collect {
+                    val message = when (it) {
+                        NetworkError.NO_INTERNET -> getString(R.string.no_internet)
+                        NetworkError.NO_INFO_ABOUT_POINT -> getString(R.string.no_info_about_point)
+                        else -> ""
+                    }
+                    stopProgress()
+                    createSnackbar(message)
+                }
             }
         }
     }
@@ -491,23 +623,18 @@ class MapFragment : Fragment(), LocationListener {
             if (currentMapCenter != null) setExpectedCenter(currentMapCenter)
             //set on touch listener
             setOnTouchListener { view, _ ->
-                val currentMapState = view as MapView
-                if (!currentMapState.isAnimating) {
-                    if (currentMapState.mapCenter.latitude != currentMapCenter?.latitude
-                        && currentMapState.mapCenter.longitude != currentMapCenter?.longitude
-                    ) {
-                        currentMapCenter = GeoPoint(
-                            currentMapState.mapCenter.latitude,
-                            currentMapState.mapCenter.longitude
-                        )
-                        if (isFixedCurrentLocation == true) {
-                            setColor(R.color.black, viewBinding.currentLocationButton.icon)
-                            isFixedCurrentLocation = false
-                            stopProgress()
-                        }
-                    } else
-                        if (currentMapState.zoomLevelDouble != currentMapZoom)
-                            currentMapZoom = currentMapState.zoomLevelDouble
+                val currentMap = view as MapView
+                if (!currentMap.isAnimating && currentMap.isInTouchMode) {
+                    currentMapCenter = GeoPoint(
+                        currentMap.mapCenter.latitude,
+                        currentMap.mapCenter.longitude
+                    )
+                    currentMapZoom = currentMap.zoomLevelDouble
+                    if (isFixedCurrentLocation == true) {
+                        setColor(R.color.black, viewBinding.currentLocationButton.icon)
+                        isFixedCurrentLocation = false
+                        stopProgress()
+                    }
                 }
                 false
             }
@@ -517,7 +644,12 @@ class MapFragment : Fragment(), LocationListener {
                     override fun singleTapConfirmedHelper(point: GeoPoint?) = false
                     override fun longPressHelper(point: GeoPoint?): Boolean {
                         point?.let {
-                            mapViewModel.getPointByLatLon(it.latitude, it.longitude, false)
+                            startProgress()
+                            mapViewModel.getPointByLatLon(
+                                it.latitude,
+                                it.longitude,
+                                PointMode.DEFAULT_POINT
+                            )
                         }
                         return false
                     }
@@ -553,6 +685,7 @@ class MapFragment : Fragment(), LocationListener {
             ) //save current map center
         )
         outState.putDouble(CURRENT_MAP_ZOOM, currentMapZoom ?: DEFAULT_ZOOM) //save current map zoom
+        outState.putBoolean(IS_OPENED, isCurrentLocationInfoWindowOpened)
         super.onSaveInstanceState(outState)
     }
 
@@ -564,10 +697,9 @@ class MapFragment : Fragment(), LocationListener {
         private const val TITLE = "TITLE"
         private const val ENABLED = true
         private const val DISABLED = false
+        private const val IS_OPENED = "IS_OPENED"
         private const val IS_FIXED_CURRENT_LOCATION = "IS_FIXED_CURRENT_LOCATION"
         private const val CURRENT_MAP_CENTER = "CURRENT_MAP_CENTER"
         private const val CURRENT_MAP_ZOOM = "CURRENT_MAP_ZOOM"
-        const val CURRENT_LOCATION_MARKER = "CURRENT_LOCATION_MARKER"
-        const val DEFAULT_ID = ""
     }
 }

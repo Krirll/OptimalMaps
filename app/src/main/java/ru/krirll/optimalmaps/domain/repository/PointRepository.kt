@@ -1,6 +1,7 @@
 package ru.krirll.optimalmaps.domain.repository
 
 import androidx.lifecycle.LiveData
+import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.domain.model.PointItem
 
 interface PointRepository {
@@ -15,5 +16,11 @@ interface PointRepository {
     fun loadSearchHistory(): LiveData<List<PointItem>>
 
     suspend fun savePointItem(item: PointItem)
+
+    suspend fun createRoute(
+        points: List<PointItem>,
+        withEndPoint: Boolean,
+        onErrorEventListener: (Int) -> Unit
+    ): Road?
 
 }

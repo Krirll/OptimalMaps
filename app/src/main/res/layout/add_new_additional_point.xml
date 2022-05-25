@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addNewPointButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_margin="10dp"
+        android:backgroundTint="@color/black"
+        android:gravity="center"
+        android:text="@string/add_new_point"
+        android:textAllCaps="false"
+        app:cornerRadius="15dp"
+        app:icon="@drawable/icon_add"
+        app:iconGravity="textStart"
+        app:iconTint="@color/white" />
+</RelativeLayout>

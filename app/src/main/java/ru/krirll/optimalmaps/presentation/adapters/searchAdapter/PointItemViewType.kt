@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.adapters
+package ru.krirll.optimalmaps.presentation.adapters.searchAdapter
 
 import ru.krirll.optimalmaps.R
 

@@ -40,7 +40,23 @@
         app:iconTint="@color/black" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/directionButton"
+        android:id="@+id/cancelButton"
+        android:layout_width="65dp"
+        android:layout_height="75dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="100dp"
+        android:backgroundTint="@color/white"
+        android:visibility="gone"
+        app:cornerRadius="35dp"
+        app:icon="@drawable/icon_hide"
+        app:iconGravity="end"
+        app:iconSize="35dp"
+        app:iconTint="@color/black" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/routeButton"
         android:layout_width="65dp"
         android:layout_height="75dp"
         android:layout_gravity="bottom|end"
@@ -48,7 +64,7 @@
         android:layout_marginBottom="25dp"
         android:backgroundTint="@color/white"
         app:cornerRadius="35dp"
-        app:icon="@drawable/icon_walk_direction"
+        app:icon="@drawable/icon_route"
         app:iconGravity="end"
         app:iconSize="35dp"
         app:iconTint="@color/black" />

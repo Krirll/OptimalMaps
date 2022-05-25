@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.presentation.adapters
+package ru.krirll.optimalmaps.presentation.adapters.viewHolder
 
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding

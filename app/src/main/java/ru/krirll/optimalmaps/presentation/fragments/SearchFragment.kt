@@ -13,11 +13,13 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentSearchBinding
-import ru.krirll.optimalmaps.presentation.adapters.PointItemViewType
-import ru.krirll.optimalmaps.presentation.adapters.PointListAdapter
+import ru.krirll.optimalmaps.presentation.adapters.searchAdapter.PointItemViewType
+import ru.krirll.optimalmaps.presentation.adapters.searchAdapter.PointListAdapter
 import ru.krirll.optimalmaps.presentation.enums.Locale
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
+import ru.krirll.optimalmaps.presentation.enums.PointMode
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
+import ru.krirll.optimalmaps.presentation.viewModels.RouteConstructorViewModel
 import ru.krirll.optimalmaps.presentation.viewModels.SearchFragmentViewModel
 
 class SearchFragment : Fragment() {
@@ -31,8 +33,12 @@ class SearchFragment : Fragment() {
     }
 
     //get current MapFragmentViewModel for setting point
-    private val mapViewModel: MapFragmentViewModel by lazy {
+    private val mapViewModel by lazy {
         ViewModelProvider(requireActivity())[MapFragmentViewModel::class.java]
+    }
+
+    private val routeConstructorViewModel by lazy {
+        ViewModelProvider(requireActivity())[RouteConstructorViewModel::class.java]
     }
 
     private var pointListAdapter: PointListAdapter? = null
@@ -71,10 +77,26 @@ class SearchFragment : Fragment() {
                 PointListAdapter.MAX_POOL_SIZE
             )
             pointListAdapter = PointListAdapter().apply {
-                setOnPointItemClickListener {
-                    //set point in mapViewModel and go back to the MapFragment
-                    mapViewModel.setPoint(it)
-                    searchViewModel.savePointItem(it)
+                setOnPointItemClickListener { item, index ->
+                    val mode = routeConstructorViewModel.getPointMode()
+                    if (mode == null) {
+                        //set point in mapViewModel
+                        mapViewModel.setPoint(item, PointMode.DEFAULT_POINT)
+                    } else {
+                        //set point in RouteConstructorViewModel
+                        when (mode) {
+                            PointMode.START_POINT -> routeConstructorViewModel.setStartPoint(
+                                item,
+                                false
+                            )
+                            PointMode.ADDITIONAL_POINT_ADD -> routeConstructorViewModel.addAdditionalPoint(item)
+                            PointMode.ADDITIONAL_POINT_EDIT -> routeConstructorViewModel.editAdditionalPoint(item)
+                            PointMode.FINISH_POINT -> routeConstructorViewModel.setFinishPoint(item)
+                            else -> { /*nothing*/ }
+                        }
+                        routeConstructorViewModel.removePointMode()
+                    }
+                    searchViewModel.savePointItem(index)
                     findNavController().popBackStack()
                 }
             }
