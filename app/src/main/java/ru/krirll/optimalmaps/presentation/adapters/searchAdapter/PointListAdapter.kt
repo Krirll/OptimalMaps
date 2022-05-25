@@ -6,13 +6,14 @@ import androidx.recyclerview.widget.ListAdapter
 import ru.krirll.optimalmaps.databinding.PointDefaultItemBinding
 import ru.krirll.optimalmaps.databinding.PointHistoryItemBinding
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.presentation.adapters.diffCallBack.PointItemDiffCallBack
 import ru.krirll.optimalmaps.presentation.adapters.viewHolder.PointItemViewHolder
 
 class PointListAdapter : ListAdapter<PointItem, PointItemViewHolder>(PointItemDiffCallBack()) {
 
-    private var onPointItemClickListener: ((PointItem) -> Unit)? = null
+    private var onPointItemClickListener: ((PointItem, Int) -> Unit)? = null
 
-    fun setOnPointItemClickListener(function: (PointItem) -> Unit) {
+    fun setOnPointItemClickListener(function: (PointItem, Int) -> Unit) {
         onPointItemClickListener = function
     }
 
@@ -38,7 +39,7 @@ class PointListAdapter : ListAdapter<PointItem, PointItemViewHolder>(PointItemDi
                         if (onPointItemClickListener == null)
                             throw RuntimeException("onPointItemClickListener == null")
                         else
-                            onPointItemClickListener?.invoke(point)
+                            onPointItemClickListener?.invoke(point, position)
                     }
                 }
             }
@@ -49,7 +50,7 @@ class PointListAdapter : ListAdapter<PointItem, PointItemViewHolder>(PointItemDi
                         if (onPointItemClickListener == null)
                             throw RuntimeException("onPointItemClickListener == null")
                         else
-                            onPointItemClickListener?.invoke(point)
+                            onPointItemClickListener?.invoke(point, position)
                     }
                 }
             }
@@ -64,6 +65,6 @@ class PointListAdapter : ListAdapter<PointItem, PointItemViewHolder>(PointItemDi
 
     companion object {
 
-        const val MAX_POOL_SIZE = 30
+        const val MAX_POOL_SIZE = 20
     }
 }

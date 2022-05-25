@@ -27,7 +27,6 @@ interface SearchHistoryDao {
     @Query("SELECT COUNT(id) FROM PointItemDbModel")
     suspend fun getCount(): Int
 
-    @Query("SELECT COUNT(id) FROM PointItemDbModel WHERE text == :text")
-    suspend fun checkExist(text: String): Int
-
+    @Query("SELECT EXISTS (SELECT * FROM PointItemDbModel WHERE text == :text)")
+    suspend fun checkExist(text: String): Boolean
 }

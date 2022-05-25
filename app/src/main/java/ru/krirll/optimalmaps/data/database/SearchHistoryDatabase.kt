@@ -17,11 +17,10 @@ abstract class SearchHistoryDatabase : RoomDatabase() {
 
     companion object {
         private var INSTANCE: SearchHistoryDatabase? = null
-        private val LOCK = Any()
         private const val DATABASE_NAME = "SearchHistoryDatabase"
 
         fun getInstance(application: Application): SearchHistoryDatabase =
-            synchronized(LOCK) { //it is necessary to prevent conflicts
+            synchronized(SearchHistoryDatabase::class) { //it is necessary to prevent conflicts
                 if (INSTANCE == null)
                     INSTANCE =
                         Room.databaseBuilder(
