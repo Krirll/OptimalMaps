@@ -40,4 +40,5 @@
     <string name="no_additional_finish_points">Пожалуйста, добавьте конечную или промежуточные точки</string>
     <string name="no_route">Невозможно построить маршрут</string>
     <string name="technical_route_error">Ошибка сервера или нет интернет соединения</string>
+    <string name="duration_length">Расстояние и время: %s</string>
 </resources>

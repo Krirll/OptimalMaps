@@ -112,25 +112,34 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun createRoute(mode: RouteMode) {
-        if (currentListOfPoints != createListOfPoints()) {
-            if (startPoint.value != null) {
-                if (additionalPoints.value != null && additionalPoints.value?.size != 0) {
-                    currentListOfPoints = createListOfPoints()
+        if (startPoint.value != null) {
+            if (additionalPoints.value != null && additionalPoints.value?.size != 0) {
+                val list = createListOfPoints()
+                if (currentListOfPoints != list) {
+                    currentListOfPoints = list
                     CoroutineScope(Dispatchers.IO).launch {
+                        clearRoute(mode)
                         _route.postValue(
                             Pair(
-                            getOptimalRouteUseCase.invoke(
-                                currentListOfPoints,
-                                finishPoint.value != null
-                            ) { viewModelScope.launch { _routeError.send(it) } },
+                                getOptimalRouteUseCase.invoke(
+                                    currentListOfPoints,
+                                    finishPoint.value != null
+                                ) { viewModelScope.launch { _routeError.send(it) } },
                                 mode
                             )
                         )
                     }
-                } else {
-                    if (finishPoint.value != null) {
-                        currentListOfPoints = createListOfPoints()
+                }
+                else {
+                    _route.postValue(Pair(_route.value?.first, mode))
+                }
+            } else {
+                if (finishPoint.value != null) {
+                    val list = createListOfPoints()
+                    if (currentListOfPoints != list) {
+                        currentListOfPoints = list
                         CoroutineScope(Dispatchers.IO).launch {
+                            clearRoute(mode)
                             _route.postValue(
                                 Pair(
                                     getOptimalRouteUseCase.invoke(
@@ -141,20 +150,22 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
                                 )
                             )
                         }
-                    } else {
-                        sendError(PointError.NO_ADDITIONAL_AND_FINISH_POINTS)
                     }
+                    else {
+                        _route.postValue(Pair(_route.value?.first, mode))
+                    }
+                } else {
+                    sendError(PointError.NO_ADDITIONAL_AND_FINISH_POINTS)
                 }
-            } else {
-                sendError(PointError.NO_START_POINT)
             }
-        }
-        else {
-            _route.postValue(Pair(_route.value?.first, mode))
+        } else {
+            sendError(PointError.NO_START_POINT)
         }
     }
 
-    fun getCurrentListOfPoints() = currentListOfPoints
+    private fun clearRoute(mode: RouteMode) {
+        _route.postValue(Pair(null, mode))
+    }
 
     private fun createListOfPoints() =
         mutableListOf<PointItem>().apply {

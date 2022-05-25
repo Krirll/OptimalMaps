@@ -13,6 +13,7 @@ import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
 import ru.krirll.optimalmaps.presentation.enums.PointMode
+import ru.krirll.optimalmaps.presentation.enums.RouteMode
 
 class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -33,30 +34,18 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
     val point: MutableLiveData<Pair<PointMode?, PointItem?>>
         get() = _point
 
-    private var _route = MutableLiveData<Road?>()
-    val route: MutableLiveData<Road?>
+    private var _route = MutableLiveData<Pair<Road?, RouteMode?>>()
+    val route: MutableLiveData<Pair<Road?, RouteMode?>>
         get() = _route
-
-    private var _listPoints = MutableLiveData<List<PointItem>?>()
-    val listPoints: MutableLiveData<List<PointItem>?>
-        get() = _listPoints
 
     private var locale: String = ""
 
-    fun setRoute(route: Road) {
-        _route.value = route
+    fun setRoute(route: Road, mode: RouteMode) {
+        _route.value = Pair(route, mode)
     }
 
     fun removeRoute() {
-        _route.value = null
-    }
-
-    fun setListPoints(list: List<PointItem>) {
-        _listPoints.value = list
-    }
-
-    fun removeListPoints() {
-        _listPoints.value = null
+        _route.value = Pair(null, null)
     }
 
     fun setPoint(point: PointItem, mode: PointMode) {

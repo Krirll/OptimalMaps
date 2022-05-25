@@ -66,7 +66,9 @@ class RouteConstructorFragment : Fragment(), LocationListener {
 
     private var locationManager: LocationManager? = null
     private var isCurrentLocationEvent: Boolean = false
-    private var isShowingProgress: Boolean = false
+    private var isShowingStartPointProgress: Boolean = false
+    private var isShowingStartNavProgress: Boolean = false
+    private var isShowingShowOnMapProgress: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -107,14 +109,38 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         tryUpdateLocationManager()
     }
 
-    private fun startProgress() {
+    private fun startPointProgress() {
         viewBinding.startLayout.progressStart.visibility = View.VISIBLE
-        isShowingProgress = true
+        isShowingStartPointProgress = true
     }
 
-    private fun stopProgress() {
+    private fun stopPointProgress() {
         viewBinding.startLayout.progressStart.visibility = View.GONE
-        isShowingProgress = false
+        isShowingStartPointProgress = false
+    }
+
+    private fun startShowOnMapProgress() {
+        viewBinding.progressShowOnMap.visibility = View.VISIBLE
+        viewBinding.startButton.isEnabled = false
+        isShowingShowOnMapProgress = true
+    }
+
+    private fun stopShowOnMapProgress() {
+        viewBinding.progressShowOnMap.visibility = View.GONE
+        viewBinding.startButton.isEnabled = true
+        isShowingShowOnMapProgress = false
+    }
+
+    private fun startNavProgress() {
+        viewBinding.progressStartNav.visibility = View.VISIBLE
+        viewBinding.showButton.isEnabled = false
+        isShowingStartNavProgress = true
+    }
+
+    private fun stopNavProgress() {
+        viewBinding.progressStartNav.visibility = View.GONE
+        viewBinding.showButton.isEnabled = true
+        isShowingStartNavProgress = false
     }
 
     @SuppressLint("MissingPermission")
@@ -135,7 +161,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                 this
             )
             if (isCurrentLocationEvent)
-                startProgress()
+                startPointProgress()
         }
     }
 
@@ -157,7 +183,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     override fun onProviderDisabled(provider: String) {
         if (routeConstructorViewModel.startPoint.value?.second == true)
             routeConstructorViewModel.removeStartPoint()
-        stopProgress()
+        stopPointProgress()
         isCurrentLocationEvent = false
     }
 
@@ -293,17 +319,20 @@ class RouteConstructorFragment : Fragment(), LocationListener {
 
     private fun initStartButton() {
         viewBinding.startButton.setOnClickListener {
+            startNavProgress()
             routeConstructorViewModel.createRoute(RouteMode.NAVIGATION_ON_MAP_MODE)
         }
     }
 
     private fun initShowOnMapButton() {
         viewBinding.showButton.setOnClickListener {
+            startShowOnMapProgress()
             routeConstructorViewModel.createRoute(RouteMode.SHOW_ON_MAP_MODE)
         }
     }
 
     private fun initShowSavedRoutesButton() {
+        //TODO сделать базу данных
         viewBinding.savedRoutesButton.setOnClickListener {
             if ((it as Button).text == getString(R.string.show_saved_routes)) {
                 viewBinding.savedRoutesRecyclerView.visibility = View.VISIBLE
@@ -365,10 +394,11 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         }
         routeConstructorViewModel.route.observe(viewLifecycleOwner) {
             if (it.first != null) {
+                stopNavProgress()
+                stopShowOnMapProgress()
                 when (it.second) { //route mode
                     RouteMode.SHOW_ON_MAP_MODE -> {
-                        mapViewModel.setRoute(it.first!!)
-                        mapViewModel.setListPoints(routeConstructorViewModel.getCurrentListOfPoints())
+                        mapViewModel.setRoute(it.first!!, RouteMode.SHOW_ON_MAP_MODE)
                         findNavController().popBackStack()
                     }
                     RouteMode.NAVIGATION_ON_MAP_MODE -> {
@@ -392,6 +422,8 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                             PointError.NO_ADDITIONAL_AND_FINISH_POINTS -> getString(R.string.no_additional_finish_points)
                         }
                     )
+                    stopNavProgress()
+                    stopShowOnMapProgress()
                 }
             }
         }
@@ -404,6 +436,8 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                         else -> ""
                     }
                 )
+                stopNavProgress()
+                stopShowOnMapProgress()
             }
         }
     }
@@ -418,7 +452,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                     }
                     PointMode.CURRENT_LOCATION_IN_CONSTRUCTOR -> {
                         routeConstructorViewModel.setStartPoint(it.second!!, true)
-                        stopProgress()
+                        stopPointProgress()
                         mapViewModel.removePoint()
                     }
                     PointMode.FINISH_POINT -> {
@@ -432,7 +466,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             }
         }
         mapViewModel.route.observe(viewLifecycleOwner) {
-            if (it == null)
+            if (it.second == null)
                 routeConstructorViewModel.route.value =
                     Pair(routeConstructorViewModel.route.value?.first, null)
         }
@@ -445,7 +479,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                         NetworkError.NO_INFO_ABOUT_POINT -> getString(R.string.no_info_about_point)
                         else -> ""
                     }
-                    stopProgress()
+                    stopPointProgress()
                     createSnackbar(message)
                 }
             }
@@ -567,9 +601,15 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             //get saved event state
             isCurrentLocationEvent = savedInstanceState.getBoolean(IS_CURRENT_LOCATION_EVENT)
             //get progress state
-            isShowingProgress = savedInstanceState.getBoolean(IS_SHOWING_PROGRESS)
-            if (isShowingProgress)
-                startProgress()
+            isShowingStartPointProgress = savedInstanceState.getBoolean(IS_SHOWING_START_POINT_PROGRESS)
+            if (isShowingStartPointProgress)
+                startPointProgress()
+            isShowingShowOnMapProgress = savedInstanceState.getBoolean(IS_SHOWING_SHOW_ON_MAP_PROGRESS)
+            if (isShowingShowOnMapProgress)
+                startShowOnMapProgress()
+            isShowingStartNavProgress = savedInstanceState.getBoolean(IS_SHOWING_START_NAV_PROGRESS)
+            if (isShowingStartNavProgress)
+                startNavProgress()
         }
     }
 
@@ -580,7 +620,9 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         )
         outState.putParcelable(TITLE, alertDialogTitle)
         outState.putBoolean(IS_CURRENT_LOCATION_EVENT, isCurrentLocationEvent)
-        outState.putBoolean(IS_SHOWING_PROGRESS, isShowingProgress)
+        outState.putBoolean(IS_SHOWING_START_POINT_PROGRESS, isShowingStartPointProgress)
+        outState.putBoolean(IS_SHOWING_SHOW_ON_MAP_PROGRESS, isShowingShowOnMapProgress)
+        outState.putBoolean(IS_SHOWING_START_NAV_PROGRESS, isShowingStartNavProgress)
         super.onSaveInstanceState(outState)
     }
 
@@ -589,6 +631,8 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         private const val ROUTE_POINT_DIALOG_MODE = "ROUTE_POINT_DIALOG_MODE"
         private const val TITLE = "TITLE"
         private const val IS_CURRENT_LOCATION_EVENT = "IS_CURRENT_LOCATION_EVENT"
-        private const val IS_SHOWING_PROGRESS = "IS_SHOWING_PROGRESS"
+        private const val IS_SHOWING_START_POINT_PROGRESS = "IS_SHOWING_START_POINT_PROGRESS"
+        private const val IS_SHOWING_SHOW_ON_MAP_PROGRESS = "IS_SHOWING_SHOW_ON_MAP_PROGRESS"
+        private const val IS_SHOWING_START_NAV_PROGRESS = "IS_SHOWING_START_NAV_PROGRESS"
     }
 }

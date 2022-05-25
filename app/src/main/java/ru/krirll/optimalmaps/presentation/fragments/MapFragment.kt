@@ -113,7 +113,6 @@ class MapFragment : Fragment(), LocationListener {
     private fun initCancelButton() {
         viewBinding.cancelButton.setOnClickListener {
             mapViewModel.removeRoute()
-            mapViewModel.removeListPoints()
             findNavController().navigate(R.id.action_mapFragment_to_routeConstructorFragment)
         }
     }
@@ -469,6 +468,7 @@ class MapFragment : Fragment(), LocationListener {
             routeButton.visibility = visibility
             currentLocationButton.visibility = visibility
             cancelButton.visibility = if (visibility == View.GONE) View.VISIBLE else View.GONE
+            lengthDurationShow.visibility = if (visibility == View.GONE) View.VISIBLE else View.GONE
         }
     }
 
@@ -488,7 +488,7 @@ class MapFragment : Fragment(), LocationListener {
                 viewBinding.map.overlays.add(nodeMarker)
             }
         }
-        val over = RoadManager.buildRoadOverlay(route).apply { isGeodesic = true}
+        val over = RoadManager.buildRoadOverlay(route).apply { isGeodesic = true }
         viewBinding.map.apply {
             currentMapCenter = GeoPoint(over.bounds.centerLatitude, over.bounds.centerLongitude)
             currentMapZoom = PointZoom.SMALL_3.zoom
@@ -497,7 +497,10 @@ class MapFragment : Fragment(), LocationListener {
             overlays.add(over)
             invalidate()
         }
-
+        viewBinding.lengthDurationShow.text = getString(
+            R.string.duration_length,
+            Road.getLengthDurationText(requireContext(), route.mLength, route.mDuration)
+        )
     }
 
     //observe MapFragmentViewModel LiveData
@@ -536,33 +539,32 @@ class MapFragment : Fragment(), LocationListener {
             }
         }
         mapViewModel.route.observe(viewLifecycleOwner) { route ->
-            if (route != null) {
-                setVisibility(View.GONE)
-                showRoute(route)
-            }
-            else {
-                setVisibility(View.VISIBLE)
-                //delete all points from map
-                viewBinding.map.overlays.removeAll(
-                    viewBinding.map.overlays.filter { it is Marker && it.id == null }
-                        .onEach {
-                            if (it is Marker && it.isInfoWindowShown)
-                                it.closeInfoWindow()
+            if (route.first != null) {
+                if (route.second != null) {
+                    when (route.second) { //route mode
+                        RouteMode.SHOW_ON_MAP_MODE -> {
+                            setVisibility(View.GONE)
+                            showRoute(route.first!!)
                         }
-                )
-                //delete route line from map
-                viewBinding.map.overlays.apply {
-                    remove(firstOrNull { it is Polyline })
+                        RouteMode.NAVIGATION_ON_MAP_MODE -> {
+                            //навигатор
+                        }
+                        else -> {
+                            /*nothing*/
+                        }
+                    }
                 }
-            }
-        }
-        mapViewModel.listPoints.observe(viewLifecycleOwner) { list ->
-            if (list == null)  {
+            } else {
+                setVisibility(View.VISIBLE)
                 //delete all points from map
                 viewBinding.map.overlays.removeAll(
                     viewBinding.map.overlays.filter { it is Marker && it.id == null }
                 )
                 viewBinding.map.invalidate()
+                //delete route line from map
+                viewBinding.map.overlays.apply {
+                    remove(firstOrNull { it is Polyline })
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {

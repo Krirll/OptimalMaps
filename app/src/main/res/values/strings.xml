@@ -40,4 +40,5 @@
     <string name="no_additional_finish_points">Please, add additional or finish points</string>
     <string name="no_route">It is impossible to build a route</string>
     <string name="technical_route_error">Server error or no internet connection</string>
+    <string name="duration_length">Length and duration: %s</string>
 </resources>
