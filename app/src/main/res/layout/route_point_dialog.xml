@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="20dp"
+    android:orientation="vertical">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/currentLocationDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:gravity="center"
+        android:text="@string/my_position"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/icon_current_location"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/chooseOnMapDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:gravity="center"
+        android:text="@string/choose_on_map"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/icon_additional_point"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/searchDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:gravity="center"
+        android:text="@string/search"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/icon_search"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/deleteDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:gravity="center"
+        android:text="@string/delete"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/icon_delete"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/closeDialogButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/black"
+        android:text="@string/close"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:icon="@drawable/icon_hide"
+        app:iconGravity="textStart"/>
+
+</LinearLayout>

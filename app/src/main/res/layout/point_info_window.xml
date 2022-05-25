@@ -32,6 +32,17 @@
             app:iconGravity="textEnd"
             app:iconPadding="0dp"
             app:iconTint="@color/black" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/chooseButton"
+            android:layout_width="30dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="7dp"
+            android:backgroundTint="@color/white"
+            app:icon="@drawable/icon_select"
+            app:iconGravity="textEnd"
+            app:iconPadding="0dp"
+            app:iconTint="@color/black" />
     </LinearLayout>
 
     <TextView

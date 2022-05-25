@@ -17,6 +17,7 @@
             android:id="@+id/backButton"
             android:layout_width="50dp"
             android:layout_height="60dp"
+            android:layout_marginStart="5dp"
             android:backgroundTint="@color/white"
             app:cornerRadius="25dp"
             app:icon="@drawable/icon_back"
