@@ -39,5 +39,40 @@
             app:exitAnim="@android:anim/fade_out"
             app:popExitAnim="@android:anim/fade_out"
             app:popUpTo="@id/routeConstructorFragment" />
+        <action
+            android:id="@+id/action_routeConstructorFragment_to_additionalPointsListFragment"
+            app:destination="@id/additionalPointsListFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/routeConstructorFragment" />
+        <action
+            android:id="@+id/action_routeConstructorFragment_to_mapPointChoiceFragment"
+            app:destination="@id/mapPointChoiceFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/routeConstructorFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/additionalPointsListFragment"
+        android:name="ru.krirll.optimalmaps.presentation.fragments.AdditionalPointsListFragment"
+        android:label="fragment_additional_points_list"
+        tools:layout="@layout/fragment_additional_points_list" >
+        <action
+            android:id="@+id/action_additionalPointsListFragment_to_searchFragment"
+            app:destination="@id/searchFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/additionalPointsListFragment" />
+        <action
+            android:id="@+id/action_additionalPointsListFragment_to_mapPointChoiceFragment"
+            app:destination="@id/mapPointChoiceFragment"
+            app:exitAnim="@android:anim/fade_out"
+            app:popExitAnim="@android:anim/fade_out"
+            app:popUpTo="@id/additionalPointsListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mapPointChoiceFragment"
+        android:name="ru.krirll.optimalmaps.presentation.fragments.MapPointChoiceFragment"
+        android:label="fragment_map_point_choice"
+        tools:layout="@layout/fragment_map_point_choice" />
 </navigation>

@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OptimalMaps</string>
     <string name="search">Search</string>
     <string name="default_point">default_point</string>
     <string name="history_point">history_point</string>
-    <string name="no_internet">Something went wrong. Check your internet connection</string>
+    <string name="change_location_mode">Turn on the high accuracy location mode for the best work</string>
     <string name="no_search_result">No results for this query</string>
     <string name="empty_query">Empty query</string>
     <string name="error">Error</string>
@@ -13,12 +14,30 @@
     <string name="location_disabled">Geolocation must be enabled</string>
     <string name="title_location_permission">Permission</string>
     <string name="title_geo_position">GeoPosition</string>
-    <string name="internet">Internet</string>
+    <string name="location_mode">Location mode</string>
     <string name="no_info_about_point">No information about this point</string>
     <string name="your_position">Your position</string>
     <string name="add_desc">Click the button on the right for add</string>
     <string name="start">start</string>
     <string name="save">save</string>
-    <string name="show">show</string>
-    <string name="saved_routes">Saved routes</string>
+    <string name="show">show on map</string>
+    <string name="show_saved_routes">show saved routes</string>
+    <string name="finish_point">Finish point (optional)</string>
+    <string name="start_point">Start point</string>
+    <string name="additional_points">Additional points</string>
+    <string name="hide_saved_routes">hide saved routes</string>
+    <string name="my_position">My position</string>
+    <string name="choose_on_map">Choose on map</string>
+    <string name="close">Close</string>
+    <string name="delete">Delete</string>
+    <string name="points_count">Count: %d</string>
+    <string name="no_internet">No internet</string>
+    <string name="double_start_point">Selected point cannot match with start point</string>
+    <string name="double_additional_point">Selected point cannot match with additional points</string>
+    <string name="double_finish_point">Selected point cannot match with finish point</string>
+    <string name="add_new_point">Add new point</string>
+    <string name="no_start_point">Please, add start point</string>
+    <string name="no_additional_finish_points">Please, add additional or finish points</string>
+    <string name="no_route">It is impossible to build a route</string>
+    <string name="technical_route_error">Server error or no internet connection</string>
 </resources>
