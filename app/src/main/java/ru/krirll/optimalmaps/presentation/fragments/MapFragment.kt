@@ -488,7 +488,7 @@ class MapFragment : Fragment(), LocationListener {
                 viewBinding.map.overlays.add(nodeMarker)
             }
         }
-        val over = RoadManager.buildRoadOverlay(route).apply { isGeodesic = true }
+        val over = RoadManager.buildRoadOverlay(route)
         viewBinding.map.apply {
             currentMapCenter = GeoPoint(over.bounds.centerLatitude, over.bounds.centerLongitude)
             currentMapZoom = PointZoom.SMALL_3.zoom
