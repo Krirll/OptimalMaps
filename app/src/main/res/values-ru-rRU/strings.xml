@@ -41,4 +41,8 @@
     <string name="no_route">Невозможно построить маршрут</string>
     <string name="technical_route_error">Ошибка сервера или нет интернет соединения</string>
     <string name="duration_length">Расстояние и время: %s</string>
+    <string name="finish_point_route">\nКонечная точка: %s</string>
+    <string name="start_point_route">Начальная точка: %s\n</string>
+    <string name="point_count_route">\nКоличество дополнительных точек: %d\n</string>
+    <string name="too_big_route">Этот маршрут слишком большой! Его нельзя сохранить</string>
 </resources>

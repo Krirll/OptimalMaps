@@ -41,4 +41,8 @@
     <string name="no_route">It is impossible to build a route</string>
     <string name="technical_route_error">Server error or no internet connection</string>
     <string name="duration_length">Length and duration: %s</string>
+    <string name="finish_point_route">\nFinish point: %s</string>
+    <string name="start_point_route">Start point: %s\n</string>
+    <string name="point_count_route">\nCount of additional points: %d\n</string>
+    <string name="too_big_route">This route is too big! It cannot be saved</string>
 </resources>
