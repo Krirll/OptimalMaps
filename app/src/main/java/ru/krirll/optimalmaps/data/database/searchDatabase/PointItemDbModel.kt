@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.data.database.model
+package ru.krirll.optimalmaps.data.database.searchDatabase
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

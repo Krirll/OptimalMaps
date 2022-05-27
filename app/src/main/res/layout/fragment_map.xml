@@ -39,6 +39,16 @@
         app:iconPadding="20dp"
         app:iconTint="@color/black" />
 
+    <TextView
+        android:id="@+id/lengthDurationShow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:padding="10dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:visibility="gone" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/cancelButton"
         android:layout_width="65dp"

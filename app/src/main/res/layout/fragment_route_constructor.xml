@@ -38,25 +38,59 @@
             android:id="@+id/finish_layout"
             layout="@layout/finish_point" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/startButton"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:backgroundTint="@color/black"
-            android:text="@string/start"
-            app:cornerRadius="20dp" />
+            android:layout_height="50dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/showButton"
+            <ProgressBar
+                android:id="@+id/progressStartNav"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center|end"
+                android:layout_marginEnd="15dp"
+                android:elevation="3dp"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/white"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/startButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:backgroundTint="@color/black"
+                android:text="@string/start"
+                app:cornerRadius="20dp" />
+
+        </FrameLayout>
+
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:backgroundTint="@color/black"
-            android:text="@string/show"
-            app:cornerRadius="20dp" />
+            android:layout_height="50dp">
+
+            <ProgressBar
+                android:id="@+id/progressShowOnMap"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center|end"
+                android:layout_marginEnd="15dp"
+                android:elevation="3dp"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/white"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/showButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:backgroundTint="@color/black"
+                android:text="@string/show"
+                app:cornerRadius="20dp" />
+
+        </FrameLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/savedRoutesButton"
@@ -75,6 +109,7 @@
             android:id="@+id/savedRoutesRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:visibility="gone" />
 
     </LinearLayout>
