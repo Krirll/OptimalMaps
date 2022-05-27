@@ -26,9 +26,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentRouteConstructorBinding
+import ru.krirll.optimalmaps.presentation.adapters.routeAdapter.RouteListAdapter
 import ru.krirll.optimalmaps.presentation.dialogFragment.RoutePointDialog
 import ru.krirll.optimalmaps.presentation.enums.*
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
@@ -54,6 +54,8 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                 createAlertDialogLocationPermissionDenied()
         }
 
+    private var listAdapter: RouteListAdapter? = null
+
     private var dialog: RoutePointDialog? = null
     private var dialogMode: PointMode? = null
 
@@ -69,6 +71,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     private var isShowingStartPointProgress: Boolean = false
     private var isShowingStartNavProgress: Boolean = false
     private var isShowingShowOnMapProgress: Boolean = false
+    private var isShowingSavedRoutes: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -89,6 +92,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         initStartPointLayout()
         initAdditionalPointsLayout()
         initFinishPointLayout()
+        initRecyclerView()
         setMapViewModelLocale()
         setSearchViewModelLocale()
         observeMapViewModel()
@@ -120,26 +124,51 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     }
 
     private fun startShowOnMapProgress() {
-        viewBinding.progressShowOnMap.visibility = View.VISIBLE
-        viewBinding.startButton.isEnabled = false
+        viewBinding.apply {
+            progressShowOnMap.visibility = View.VISIBLE
+            startButton.isEnabled = false
+            setEnabled(false)
+        }
         isShowingShowOnMapProgress = true
     }
 
     private fun stopShowOnMapProgress() {
-        viewBinding.progressShowOnMap.visibility = View.GONE
-        viewBinding.startButton.isEnabled = true
+        viewBinding.apply {
+            progressShowOnMap.visibility = View.GONE
+            startButton.isEnabled = true
+            setEnabled(true)
+        }
         isShowingShowOnMapProgress = false
     }
 
     private fun startNavProgress() {
-        viewBinding.progressStartNav.visibility = View.VISIBLE
-        viewBinding.showButton.isEnabled = false
+        viewBinding.apply {
+            progressStartNav.visibility = View.VISIBLE
+            showButton.isEnabled = false
+            setEnabled(false)
+        }
         isShowingStartNavProgress = true
     }
 
+    private fun setEnabled(value: Boolean) {
+        viewBinding.apply {
+            startLayout.editStart.isEnabled = value
+            additionalLayout.editAdd.isEnabled = value
+            finishLayout.editFinish.isEnabled = value
+            if (!value) {
+                savedRoutesButton.text = getString(R.string.show_saved_routes)
+                savedRoutesRecyclerView.visibility = View.GONE
+            }
+            savedRoutesButton.isEnabled = value
+        }
+    }
+
     private fun stopNavProgress() {
-        viewBinding.progressStartNav.visibility = View.GONE
-        viewBinding.showButton.isEnabled = true
+        viewBinding.apply {
+            progressStartNav.visibility = View.GONE
+            showButton.isEnabled = true
+            setEnabled(true)
+        }
         isShowingStartNavProgress = false
     }
 
@@ -332,12 +361,15 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     }
 
     private fun initShowSavedRoutesButton() {
-        //TODO сделать базу данных
         viewBinding.savedRoutesButton.setOnClickListener {
             if ((it as Button).text == getString(R.string.show_saved_routes)) {
                 viewBinding.savedRoutesRecyclerView.visibility = View.VISIBLE
                 it.text = getString(R.string.hide_saved_routes)
+                isShowingSavedRoutes = true
+                if (listAdapter?.currentList == null)
+                    routeConstructorViewModel.loadRouteHistory()
             } else {
+                isShowingSavedRoutes = false
                 it.text = getString(R.string.show_saved_routes)
                 viewBinding.savedRoutesRecyclerView.visibility = View.GONE
             }
@@ -363,6 +395,27 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             dialogMode = PointMode.FINISH_POINT
             dialogMode?.let { createDialogByMode(it) }
         }
+    }
+
+    private fun initRecyclerView() {
+        listAdapter = RouteListAdapter().apply {
+            setOnRouteItemClickListener {
+                routeConstructorViewModel.apply {
+                    startPoint.value = Pair(it.list[0], false)
+                    additionalPoints.value = mutableListOf()
+                    it.list.forEachIndexed { index, pointItem ->
+                        if (index != 0 && index != it.list.lastIndex)
+                            additionalPoints.value = additionalPoints.value?.apply { add(pointItem) }
+                    }
+                    finishPoint.value = it.list[it.list.lastIndex]
+                    updateCurrentList()
+                    route.value = Pair(it.route, null)
+                }
+                viewBinding.scrollView.smoothScrollTo(0, 0, 1200)
+            }
+        }
+        routeConstructorViewModel.loadRouteHistory()
+        viewBinding.savedRoutesRecyclerView.adapter = listAdapter!!
     }
 
     private fun observeRouteConstructorViewModel() {
@@ -392,22 +445,32 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             else
                 viewBinding.finishLayout.finishText.setText("")
         }
-        routeConstructorViewModel.route.observe(viewLifecycleOwner) {
+        routeConstructorViewModel.route.observe(viewLifecycleOwner) { it ->
             if (it.first != null) {
                 stopNavProgress()
                 stopShowOnMapProgress()
                 when (it.second) { //route mode
                     RouteMode.SHOW_ON_MAP_MODE -> {
+                        if (it.first?.mLength!! < 1000)
+                            saveRoute()
                         mapViewModel.setRoute(it.first!!, RouteMode.SHOW_ON_MAP_MODE)
                         findNavController().popBackStack()
                     }
                     RouteMode.NAVIGATION_ON_MAP_MODE -> {
+                        if (it.first?.mLength!! < 1000)
+                            saveRoute()
                         //navigator
                     }
                     else -> {
                         /*nothing*/
                     }
+
                 }
+            }
+        }
+        routeConstructorViewModel.routeHistory.observe(viewLifecycleOwner) {
+            if (it != null) {
+                listAdapter?.submitList(it.reversed())
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -431,14 +494,29 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             routeConstructorViewModel.routeError.collect {
                 createSnackbar(
                     when (it) {
-                        Road.STATUS_INVALID -> getString(R.string.no_route)
-                        Road.STATUS_TECHNICAL_ISSUE -> getString(R.string.technical_route_error)
-                        else -> ""
+                        RouteError.ROUTE_INVALID -> getString(R.string.no_route)
+                        RouteError.ROUTE_TECHNICAL_ISSUE -> getString(R.string.technical_route_error)
+                        RouteError.ROUTE_TOO_BIG -> getString(R.string.too_big_route)
                     }
                 )
                 stopNavProgress()
                 stopShowOnMapProgress()
             }
+        }
+    }
+
+    private fun saveRoute() {
+        routeConstructorViewModel.apply {
+            val firstString = startPoint.value?.first?.let {
+                getString(R.string.start_point_route, it.text)
+            } ?: ""
+            val secondString = additionalPoints.value?.let {
+                getString(R.string.point_count_route, it.size)
+            } ?: ""
+            val thirdString = finishPoint.value?.let {
+                getString(R.string.finish_point_route, it.text)
+            } ?: ""
+            saveRoute(firstString + secondString + thirdString)
         }
     }
 
@@ -610,6 +688,12 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             isShowingStartNavProgress = savedInstanceState.getBoolean(IS_SHOWING_START_NAV_PROGRESS)
             if (isShowingStartNavProgress)
                 startNavProgress()
+            isShowingSavedRoutes = savedInstanceState.getBoolean(IS_SHOWING_SAVED_ROUTES)
+            if (isShowingSavedRoutes) {
+                viewBinding.savedRoutesRecyclerView.visibility = View.VISIBLE
+                viewBinding.savedRoutesButton.text = getString(R.string.hide_saved_routes)
+                routeConstructorViewModel.loadRouteHistory()
+            }
         }
     }
 
@@ -623,6 +707,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         outState.putBoolean(IS_SHOWING_START_POINT_PROGRESS, isShowingStartPointProgress)
         outState.putBoolean(IS_SHOWING_SHOW_ON_MAP_PROGRESS, isShowingShowOnMapProgress)
         outState.putBoolean(IS_SHOWING_START_NAV_PROGRESS, isShowingStartNavProgress)
+        outState.putBoolean(IS_SHOWING_SAVED_ROUTES, isShowingSavedRoutes)
         super.onSaveInstanceState(outState)
     }
 
@@ -634,5 +719,6 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         private const val IS_SHOWING_START_POINT_PROGRESS = "IS_SHOWING_START_POINT_PROGRESS"
         private const val IS_SHOWING_SHOW_ON_MAP_PROGRESS = "IS_SHOWING_SHOW_ON_MAP_PROGRESS"
         private const val IS_SHOWING_START_NAV_PROGRESS = "IS_SHOWING_START_NAV_PROGRESS"
+        private const val IS_SHOWING_SAVED_ROUTES = "IS_SHOWING_SAVED_ROUTES"
     }
 }

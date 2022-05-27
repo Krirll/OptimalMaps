@@ -13,15 +13,21 @@ import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
 import ru.krirll.optimalmaps.domain.entities.GetOptimalRouteUseCase
+import ru.krirll.optimalmaps.domain.entities.LoadRouteHistoryUseCase
+import ru.krirll.optimalmaps.domain.entities.SaveRouteUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.domain.model.RouteItem
 import ru.krirll.optimalmaps.presentation.enums.PointError
 import ru.krirll.optimalmaps.presentation.enums.PointMode
+import ru.krirll.optimalmaps.presentation.enums.RouteError
 import ru.krirll.optimalmaps.presentation.enums.RouteMode
 
 class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repository = PointRepositoryImpl(app)
     private val getOptimalRouteUseCase = GetOptimalRouteUseCase(repository)
+    private val loadRouteHistoryUseCase = LoadRouteHistoryUseCase(repository)
+    private val saveRouteUseCase = SaveRouteUseCase(repository)
 
     private var _startPoint = MutableLiveData<Pair<PointItem, Boolean>?>()
     val startPoint: MutableLiveData<Pair<PointItem, Boolean>?>
@@ -41,11 +47,15 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
 
     private var currentListOfPoints: MutableList<PointItem> = mutableListOf()
 
+    private var _routeHistory = MutableLiveData<List<RouteItem>>()
+    val routeHistory: MutableLiveData<List<RouteItem>>
+        get() = _routeHistory
+
     private var _pointError = Channel<PointError>(CONFLATED)
     val pointError
         get() = _pointError.receiveAsFlow()
 
-    private var _routeError = Channel<Int>(CONFLATED)
+    private var _routeError = Channel<RouteError>(CONFLATED)
     val routeError
         get() = _routeError.receiveAsFlow()
 
@@ -174,6 +184,11 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
             finishPoint.value?.let { add(it) }
         }
 
+    fun updateCurrentList() {
+        currentListOfPoints.clear()
+        currentListOfPoints = createListOfPoints()
+    }
+
     private fun contains(point: PointItem): Boolean {
         var result = true
         if (point.lat != startPoint.value?.first?.lat && point.lat != startPoint.value?.first?.lat) {
@@ -192,6 +207,22 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
             sendError(PointError.START_POINT_CONTAINS)
         }
         return result
+    }
+
+    fun loadRouteHistory() {
+        if (_routeHistory.value == null)
+            _routeHistory = loadRouteHistoryUseCase.invoke() as MutableLiveData<List<RouteItem>>
+        else
+            _routeHistory.postValue(_routeHistory.value)
+    }
+
+    fun saveRoute(points: String) {
+        viewModelScope.launch {
+            _route.value?.let {
+                if (it.first != null)
+                    saveRouteUseCase.invoke(it.first!!, points, currentListOfPoints)
+            }
+        }
     }
 
     private fun sendError(error: PointError) {
