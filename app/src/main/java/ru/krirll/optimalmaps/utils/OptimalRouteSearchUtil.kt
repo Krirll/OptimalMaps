@@ -37,13 +37,11 @@ class OptimalRouteSearchUtil(private val context: Context) {
             secondPoint = GeoPoint(points[1].lat, points[1].lon)
         }
         if (points.size == 2) {
-            resultRoad =
-                if (resultRoad?.mStatus == Road.STATUS_OK) {
-                    getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
-                } else {
-                    sendError(resultRoad?.mStatus!!, onErrorEventListener)
-                    null
-                }
+            resultRoad = getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
+            if (resultRoad?.mStatus != Road.STATUS_OK) {
+                sendError(resultRoad?.mStatus!!, onErrorEventListener)
+                resultRoad = null
+            }
         } else {
             if (points.size == 3) {
                 val thirdPoint = GeoPoint(points[2].lat, points[2].lon)

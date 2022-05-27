@@ -499,6 +499,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                         RouteError.ROUTE_TOO_BIG -> getString(R.string.too_big_route)
                     }
                 )
+                routeConstructorViewModel.clearCurrentListOfPoints()
                 stopNavProgress()
                 stopShowOnMapProgress()
             }

@@ -177,6 +177,10 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
         _route.postValue(Pair(null, mode))
     }
 
+    fun clearCurrentListOfPoints() {
+        currentListOfPoints = mutableListOf()
+    }
+
     private fun createListOfPoints() =
         mutableListOf<PointItem>().apply {
             startPoint.value?.first?.let { add(it) }
