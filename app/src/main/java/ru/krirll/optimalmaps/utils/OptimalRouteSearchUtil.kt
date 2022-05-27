@@ -7,20 +7,21 @@ import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
 import ru.krirll.optimalmaps.BuildConfig
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.presentation.enums.RouteError
 
 class OptimalRouteSearchUtil(private val context: Context) {
 
     fun getRoute(
         points: List<PointItem>,
         withEndPoint: Boolean,
-        onErrorEventListener: (Int) -> Unit
+        onErrorEventListener: (RouteError) -> Unit
     ): Road? =
         getOptimalRoute(points, withEndPoint, onErrorEventListener)
 
     private fun getOptimalRoute(
         points: List<PointItem>,
         withEndPoint: Boolean = false,
-        onErrorEventListener: (Int) -> Unit
+        onErrorEventListener: (RouteError) -> Unit
     ): Road? {
         val rm = OSRMRoadManager(
             context,
@@ -36,15 +37,20 @@ class OptimalRouteSearchUtil(private val context: Context) {
             secondPoint = GeoPoint(points[1].lat, points[1].lon)
         }
         if (points.size == 2) {
-            resultRoad = getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
-            if (resultRoad?.mStatus != Road.STATUS_OK) resultRoad = null
+            resultRoad =
+                if (resultRoad?.mStatus == Road.STATUS_OK) {
+                    getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
+                } else {
+                    sendError(resultRoad?.mStatus!!, onErrorEventListener)
+                    null
+                }
         } else {
             if (points.size == 3) {
                 val thirdPoint = GeoPoint(points[2].lat, points[2].lon)
                 if (withEndPoint) {
                     resultRoad = getRoad(arrayListOf(startPoint!!, secondPoint!!, thirdPoint), rm)
                     if (resultRoad?.mStatus != Road.STATUS_OK) {
-                        onErrorEventListener(resultRoad?.mStatus!!)
+                        sendError(resultRoad.mStatus, onErrorEventListener)
                         resultRoad = null
                     }
                 } else {
@@ -68,25 +74,28 @@ class OptimalRouteSearchUtil(private val context: Context) {
                                     rm
                                 )
                             if (resultRoad?.mStatus != Road.STATUS_OK) {
-                                onErrorEventListener(resultRoad?.mStatus!!)
+                                sendError(resultRoad?.mStatus!!, onErrorEventListener)
                                 resultRoad = null
                             }
                         } else
-                            onErrorEventListener(secondRoadFromStart.mStatus)
+                            sendError(secondRoadFromStart.mStatus, onErrorEventListener)
                     } else
-                        onErrorEventListener(firstRoadFromStart.mStatus)
+                        sendError(firstRoadFromStart.mStatus, onErrorEventListener)
                 }
             } else {
                 resultRoad = getOptimalRouteByList(points, withEndPoint, onErrorEventListener)
             }
         }
+        if (resultRoad != null)
+            if (resultRoad.mLength > 1000)
+                sendError(ROUTE_TOO_BIG, onErrorEventListener)
         return resultRoad
     }
 
     private fun getOptimalRouteByList(
         listOfPoints: List<PointItem>,
         withEndPoint: Boolean,
-        onErrorEventListener: (Int) -> Unit
+        onErrorEventListener: (RouteError) -> Unit
     ): Road? {
         val listOfRoads: MutableList<Road>? = null
         //здесь будет алгоритм
@@ -109,4 +118,19 @@ class OptimalRouteSearchUtil(private val context: Context) {
 
     private fun getRoad(geoPoints: ArrayList<GeoPoint>, roadManager: RoadManager) =
         roadManager.getRoad(geoPoints)
+
+    private fun sendError(error: Int, onErrorEventListener: (RouteError) -> Unit) {
+        when (error) {
+            Road.STATUS_INVALID -> onErrorEventListener(RouteError.ROUTE_INVALID)
+            Road.STATUS_TECHNICAL_ISSUE -> onErrorEventListener(RouteError.ROUTE_TECHNICAL_ISSUE)
+            ROUTE_TOO_BIG -> onErrorEventListener(RouteError.ROUTE_TOO_BIG)
+            else -> {
+                /*nothing*/
+            }
+        }
+    }
+
+    companion object {
+        private const val ROUTE_TOO_BIG = 10
+    }
 }
