@@ -1,10 +1,9 @@
-package ru.krirll.optimalmaps.data.database
+package ru.krirll.optimalmaps.data.database.searchDatabase
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import ru.krirll.optimalmaps.data.database.model.PointItemDbModel
 
 @Dao
 interface SearchHistoryDao {
