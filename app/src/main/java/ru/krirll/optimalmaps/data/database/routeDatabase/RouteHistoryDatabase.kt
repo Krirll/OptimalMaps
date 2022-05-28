@@ -5,7 +5,6 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import ru.krirll.optimalmaps.data.database.routeDatabase.converters.GeoPointConverter
 import ru.krirll.optimalmaps.data.database.routeDatabase.converters.PointItemConverter
 import ru.krirll.optimalmaps.data.database.routeDatabase.converters.PolylineConverter
 import ru.krirll.optimalmaps.data.database.routeDatabase.converters.RoadNodeConverter
@@ -17,7 +16,6 @@ import ru.krirll.optimalmaps.data.database.routeDatabase.converters.RoadNodeConv
 )
 @TypeConverters(
     PolylineConverter::class,
-    GeoPointConverter::class,
     RoadNodeConverter::class,
     PointItemConverter::class
 )
