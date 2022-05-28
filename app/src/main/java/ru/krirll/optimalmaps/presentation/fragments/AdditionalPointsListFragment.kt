@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.krirll.optimalmaps.R
@@ -66,6 +67,9 @@ class AdditionalPointsListFragment : Fragment() {
                 AdditionalPointViewType.POINT_ITEM.layout,
                 AdditionalPointsListAdapter.MAX_POOL_SIZE
             )
+            layoutManager = LinearLayoutManager(requireContext()).apply {
+                stackFromEnd = true
+            }
             //set adapter
             listAdapter = AdditionalPointsListAdapter().apply {
                 setOnAddClickListener {
