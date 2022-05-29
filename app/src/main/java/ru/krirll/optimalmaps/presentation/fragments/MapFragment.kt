@@ -46,6 +46,7 @@ import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
 import ru.krirll.optimalmaps.presentation.enums.*
 import ru.krirll.optimalmaps.presentation.infoWindow.DefaultInfoWindow
+import ru.krirll.optimalmaps.presentation.rotationOverlay.RotationOverlay
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 
 class MapFragment : Fragment(), LocationListener {
@@ -93,9 +94,17 @@ class MapFragment : Fragment(), LocationListener {
         initSearchButton()
         initRouteButton()
         initCancelButton()
+        initCompass()
         initLocationManager()
         initCurrentLocationButton()
         observeViewModel()
+    }
+
+    private fun initCompass() {
+        viewBinding.compass.setOnClickListener {
+            viewBinding.map.mapOrientation = 0.0f
+            viewBinding.compass.visibility = View.GONE
+        }
     }
 
     override fun onResume() {
@@ -616,6 +625,13 @@ class MapFragment : Fragment(), LocationListener {
             zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
             //access zooming by fingers
             setMultiTouchControls(true)
+            //add rotation with by fingers
+            overlays.add(RotationOverlay(this) {
+                if (it > 1f || it < -1f)
+                    viewBinding.compass.visibility = View.VISIBLE
+                else
+                    viewBinding.compass.visibility = View.GONE
+            })
             //set min and max zoom
             minZoomLevel = MIN_ZOOM
             maxZoomLevel = MAX_ZOOM
