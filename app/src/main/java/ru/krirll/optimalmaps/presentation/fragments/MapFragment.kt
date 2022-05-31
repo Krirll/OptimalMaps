@@ -29,7 +29,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import org.osmdroid.api.IGeoPoint
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.bonuspack.routing.RoadNode
@@ -70,7 +69,7 @@ class MapFragment : Fragment(), LocationListener {
     private var locationManager: LocationManager? = null
     private var isCurrentLocationInfoWindowOpened = false
 
-    private var currentMapCenter: IGeoPoint? = null //for saving center
+    private var currentMapCenter: GeoPoint? = null //for saving center
     private var currentMapZoom: Double? = null         //for saving zoom
     private var isFixedCurrentLocation: Boolean? = null //for saving current location state
 
@@ -145,6 +144,10 @@ class MapFragment : Fragment(), LocationListener {
             currentMapZoom = savedInstanceState.getDouble(CURRENT_MAP_ZOOM)
             //get current location info window state
             isCurrentLocationInfoWindowOpened = savedInstanceState.getBoolean(IS_OPENED, false)
+            viewBinding.map.mapOrientation = savedInstanceState.getFloat(MAP_ROTATION, 0.0f)
+            if (viewBinding.map.mapOrientation != 0.0f) {
+                viewBinding.compass.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -179,11 +182,76 @@ class MapFragment : Fragment(), LocationListener {
             "",
             isFixedCurrentLocation ?: false
         )
+        if (mapViewModel.route.value?.second == RouteMode.NAVIGATION_ON_MAP_MODE) {
+            viewBinding.navDescriptionBlock.visibility = View.VISIBLE
+            mapViewModel.route.value?.first?.mNodes?.get(mapViewModel.getCurrentIndexNode())?.let {
+                updateNavigationInstructions(
+                    geoPoint,
+                    it
+                )
+            }
+        }
+    }
+
+    private fun updateNavigationInstructions(position: GeoPoint, node: RoadNode) {
+
+        val length = getLengthFromPositionToNode(position, node.mLocation)
+        val icons = resources.obtainTypedArray(R.array.directions_icons)
+        val iconId = icons.getResourceId(node.mManeuverType, R.drawable.ic_empty)
+        viewBinding.apply {
+            directionTitle.text =
+                if (node.mInstructions != null) node.mInstructions else getString(R.string.move_line)
+            lengthDirection.text = getFormattedLengthString(length)
+            directionImage.setImageDrawable(
+                getDrawable(
+                    requireContext(),
+                    if (iconId == R.drawable.ic_empty) R.drawable.ic_continue else iconId
+                )
+            )
+        }
+        icons.recycle()
+        if (length <= 20) {
+            mapViewModel.removeLastNode()
+            viewBinding.map.apply {
+                overlays.add(mapViewModel.route.value?.first?.mRouteHigh?.let { it ->
+                    overlays.remove(overlays.find { it is Polyline })
+                    buildPolyline(it)
+                })
+            }
+            if (mapViewModel.getCurrentIndexNode() == mapViewModel.route.value?.first?.mNodes?.size)
+                mapViewModel.removeRoute()
+        }
+    }
+
+    private fun getFormattedLengthString(length: Float): String =
+        if (length >= 1000.0) {
+            getString(
+                R.string.format_distance_kilometers,
+                length.toInt().toString()
+            )
+        } else {
+            getString(
+                R.string.format_distance_meters,
+                length.toInt().toString()
+            )
+        }
+
+    private fun getLengthFromPositionToNode(position: GeoPoint, node: GeoPoint): Float {
+        val result = FloatArray(1)
+        Location.distanceBetween(
+            position.latitude,
+            position.longitude,
+            node.latitude,
+            node.longitude,
+            result
+        )
+        return result[0]
     }
 
     override fun onProviderDisabled(provider: String) {
         changeCurrentLocationMarkerColor(R.color.black)
         changeLocationButtonIcon(DISABLED)
+        createSnackbar(getString(R.string.no_location))
     }
 
     override fun onProviderEnabled(provider: String) {
@@ -471,7 +539,7 @@ class MapFragment : Fragment(), LocationListener {
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
     }
 
-    private fun setVisibility(visibility: Int) {
+    private fun setVisibilityForShowMode(visibility: Int) {
         viewBinding.apply {
             searchButton.visibility = visibility
             routeButton.visibility = visibility
@@ -481,7 +549,15 @@ class MapFragment : Fragment(), LocationListener {
         }
     }
 
-    private fun showRoute(route: Road) {
+    private fun setVisibilityForNavigationMode(visibility: Int) {
+        viewBinding.apply {
+            routeButton.visibility = visibility
+            searchButton.visibility = visibility
+            cancelButton.visibility = if (visibility == View.GONE) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun showRoute(route: Road, mode: RouteMode) {
         for (i in 0 until route.mNodes.size) {
             val node: RoadNode = route.mNodes[i]
             if (node.mManeuverType == 24) {
@@ -495,21 +571,41 @@ class MapFragment : Fragment(), LocationListener {
                 nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 nodeMarker.setOnMarkerClickListener { _, _ -> true }
                 viewBinding.map.overlays.add(nodeMarker)
+                viewBinding.map.invalidate()
             }
         }
-        val over = RoadManager.buildRoadOverlay(route)
+        var over: Polyline
         viewBinding.map.apply {
-            currentMapCenter = GeoPoint(over.bounds.centerLatitude, over.bounds.centerLongitude)
-            currentMapZoom = PointZoom.getZoomByRouteLength(route.mLength)
-            controller.setCenter(currentMapCenter)
-            controller.setZoom(currentMapZoom!!)
+            if (mode == RouteMode.SHOW_ON_MAP_MODE) {
+                over = RoadManager.buildRoadOverlay(route)
+                currentMapCenter = GeoPoint(over.bounds.centerLatitude, over.bounds.centerLongitude)
+                currentMapZoom = PointZoom.getZoomByRouteLength(route.mLength)
+                controller.setCenter(currentMapCenter)
+                controller.setZoom(currentMapZoom!!)
+                viewBinding.lengthDurationShow.text = getString(
+                    R.string.duration_length,
+                    Road.getLengthDurationText(requireContext(), route.mLength, route.mDuration)
+                )
+            } else {
+                over = buildPolyline(mapViewModel.route.value?.first?.mRouteHigh!!)
+                val index = mapViewModel.getCurrentIndexNode()
+                if (index != mapViewModel.route.value?.first?.mNodes?.size)
+                    currentMapCenter = mapViewModel.route.value?.first?.mNodes?.get(index - 1)?.mLocation
+                currentMapZoom = PointZoom.SMALL_2.zoom
+                controller.setCenter(currentMapCenter)
+                controller.setZoom(currentMapZoom!!)
+            }
             overlays.add(over)
             invalidate()
         }
-        viewBinding.lengthDurationShow.text = getString(
-            R.string.duration_length,
-            Road.getLengthDurationText(requireContext(), route.mLength, route.mDuration)
-        )
+    }
+
+    private fun buildPolyline(points: List<GeoPoint>): Polyline {
+        return Polyline().apply {
+            color = getColor(requireContext(), R.color.purple_500)
+            width = 6.0f
+            setPoints(points)
+        }
     }
 
     //observe MapFragmentViewModel LiveData
@@ -550,30 +646,25 @@ class MapFragment : Fragment(), LocationListener {
         mapViewModel.route.observe(viewLifecycleOwner) { route ->
             if (route.first != null) {
                 if (route.second != null) {
-                    when (route.second) { //route mode
+                    when (route.second!!) { //route mode
                         RouteMode.SHOW_ON_MAP_MODE -> {
-                            setVisibility(View.GONE)
-                            showRoute(route.first!!)
+                            setVisibilityForShowMode(View.GONE)
+                            showRoute(route.first!!, RouteMode.SHOW_ON_MAP_MODE)
                         }
                         RouteMode.NAVIGATION_ON_MAP_MODE -> {
-                            //навигатор
-                        }
-                        else -> {
-                            /*nothing*/
+                            setVisibilityForNavigationMode(View.GONE)
+                            showRoute(route.first!!, RouteMode.NAVIGATION_ON_MAP_MODE)
                         }
                     }
                 }
             } else {
-                setVisibility(View.VISIBLE)
+                if (viewBinding.lengthDurationShow.visibility == View.VISIBLE)
+                    setVisibilityForShowMode(View.VISIBLE)
+                if (viewBinding.navDescriptionBlock.visibility == View.VISIBLE)
+                    setVisibilityForNavigationMode(View.VISIBLE)
                 //delete all points from map
-                viewBinding.map.overlays.removeAll(
-                    viewBinding.map.overlays.filter { it is Marker && it.id == null }
-                )
+                viewBinding.map.overlays.clear()
                 viewBinding.map.invalidate()
-                //delete route line from map
-                viewBinding.map.overlays.apply {
-                    remove(firstOrNull { it is Polyline })
-                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -704,6 +795,7 @@ class MapFragment : Fragment(), LocationListener {
         )
         outState.putDouble(CURRENT_MAP_ZOOM, currentMapZoom ?: DEFAULT_ZOOM) //save current map zoom
         outState.putBoolean(IS_OPENED, isCurrentLocationInfoWindowOpened)
+        outState.putFloat(MAP_ROTATION, viewBinding.map.mapOrientation)
         super.onSaveInstanceState(outState)
     }
 
@@ -719,5 +811,6 @@ class MapFragment : Fragment(), LocationListener {
         private const val IS_FIXED_CURRENT_LOCATION = "IS_FIXED_CURRENT_LOCATION"
         private const val CURRENT_MAP_CENTER = "CURRENT_MAP_CENTER"
         private const val CURRENT_MAP_ZOOM = "CURRENT_MAP_ZOOM"
+        private const val MAP_ROTATION = "MAP_ROTATION"
     }
 }
