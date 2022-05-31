@@ -26,6 +26,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentRouteConstructorBinding
 import ru.krirll.optimalmaps.presentation.adapters.routeAdapter.RouteListAdapter
@@ -445,21 +446,29 @@ class RouteConstructorFragment : Fragment(), LocationListener {
             else
                 viewBinding.finishLayout.finishText.setText("")
         }
-        routeConstructorViewModel.route.observe(viewLifecycleOwner) { it ->
+        routeConstructorViewModel.route.observe(viewLifecycleOwner) {
             if (it.first != null) {
                 stopNavProgress()
                 stopShowOnMapProgress()
+                routeConstructorViewModel.updateNodes()
+                val routeCopy = Road().apply {
+                    mLength = it.first?.mLength!!
+                    mDuration = it.first?.mDuration!!
+                    mNodes = it.first?.mNodes!!
+                    mRouteHigh = it.first?.mRouteHigh
+                }
                 when (it.second) { //route mode
                     RouteMode.SHOW_ON_MAP_MODE -> {
                         if (it.first?.mLength!! < 1000)
                             saveRoute()
-                        mapViewModel.setRoute(it.first!!, RouteMode.SHOW_ON_MAP_MODE)
+                        mapViewModel.setRoute(routeCopy, RouteMode.SHOW_ON_MAP_MODE)
                         findNavController().popBackStack()
                     }
                     RouteMode.NAVIGATION_ON_MAP_MODE -> {
                         if (it.first?.mLength!! < 1000)
                             saveRoute()
-                        //navigator
+                        mapViewModel.setRoute(routeCopy, RouteMode.NAVIGATION_ON_MAP_MODE)
+                        findNavController().popBackStack()
                     }
                     else -> {
                         /*nothing*/
