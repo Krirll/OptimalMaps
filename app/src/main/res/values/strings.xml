@@ -45,4 +45,8 @@
     <string name="start_point_route">Start point: %s\n</string>
     <string name="point_count_route">\nCount of additional points: %d\n</string>
     <string name="too_big_route">This route is too big! It cannot be saved</string>
+    <string name="no_location">Current location is disabled</string>
+    <string name="format_distance_kilometers">%skm</string>
+    <string name="format_distance_meters">%sm</string>
+    <string name="move_line">Move along the line</string>
 </resources>
