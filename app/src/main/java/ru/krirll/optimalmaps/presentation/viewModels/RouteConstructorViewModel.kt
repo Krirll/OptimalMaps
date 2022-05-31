@@ -21,6 +21,8 @@ import ru.krirll.optimalmaps.presentation.enums.PointError
 import ru.krirll.optimalmaps.presentation.enums.PointMode
 import ru.krirll.optimalmaps.presentation.enums.RouteError
 import ru.krirll.optimalmaps.presentation.enums.RouteMode
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -170,6 +172,21 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
             }
         } else {
             sendError(PointError.NO_START_POINT)
+        }
+    }
+
+    fun updateNodes() {
+        val regex = Regex(",")
+        val format = DecimalFormat("#.####").apply { roundingMode = RoundingMode.UP }
+        _route.value?.first?.mRouteHigh!!.forEach {
+            it.latitude = regex.replace(format.format(it.latitude), ".").toDouble()
+            it.longitude = regex.replace(format.format(it.longitude), ".").toDouble()
+        }
+        _route.value?.first?.mNodes!!.forEach {
+            it.mLocation.latitude =
+                regex.replace(format.format(it.mLocation.latitude), ".").toDouble()
+            it.mLocation.longitude =
+                regex.replace(format.format(it.mLocation.longitude), ".").toDouble()
         }
     }
 
