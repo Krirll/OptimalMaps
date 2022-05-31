@@ -38,15 +38,32 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
     val route: MutableLiveData<Pair<Road?, RouteMode?>>
         get() = _route
 
+    private var currentIndexNode = 1
+
     private var locale: String = ""
 
     fun setRoute(route: Road, mode: RouteMode) {
-        _route.value = Pair(route, mode)
+        _route.value = Pair(route.apply { mRouteHigh = ArrayList(route.mRouteHigh) }, mode)
     }
 
     fun removeRoute() {
         _route.value = Pair(null, null)
+        currentIndexNode = 1
     }
+
+    fun removeLastNode() {
+        var containsPoint = _route.value?.first?.mRouteHigh?.indexOf(
+            route.value?.first?.mNodes?.get(currentIndexNode)?.mLocation
+        )
+        containsPoint?.let {
+            while(containsPoint-- != 0) {
+                _route.value?.first?.mRouteHigh?.removeFirst()
+            }
+        }
+        currentIndexNode++
+    }
+
+    fun getCurrentIndexNode() = currentIndexNode
 
     fun setPoint(point: PointItem, mode: PointMode) {
         _point.value = Pair(mode, point)
