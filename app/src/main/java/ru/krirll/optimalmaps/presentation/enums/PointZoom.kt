@@ -20,7 +20,7 @@ enum class PointZoom(private val importance: Double, val zoom: Double) {
                 val valueDouble = value.toDouble()
                 type =
                     if (valueDouble > 0.1)
-                        PointZoom.values().first {
+                        values().first {
                             it.importance == (valueDouble * 10).toInt().toDouble() / 10
                         }
                     else
@@ -28,5 +28,17 @@ enum class PointZoom(private val importance: Double, val zoom: Double) {
             }
             return type.zoom
         }
+
+        fun getZoomByRouteLength(length: Double): Double =
+            when(length.toInt()) {
+                in 0..2 -> SMALL_3.zoom
+                in 3..5 -> SMALL_3.zoom
+                in 5..7 -> MEDIUM_1.zoom
+                in 7..10 -> MEDIUM_2.zoom
+                in 10..15 -> MEDIUM_3.zoom
+                in 15..100 -> LARGE_1.zoom
+                in 100..200 -> LARGE_2.zoom
+                else -> LARGE_3.zoom
+            }
     }
 }

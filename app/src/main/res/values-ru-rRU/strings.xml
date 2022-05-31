@@ -45,4 +45,8 @@
     <string name="start_point_route">Начальная точка: %s\n</string>
     <string name="point_count_route">\nКоличество дополнительных точек: %d\n</string>
     <string name="too_big_route">Этот маршрут слишком большой! Его нельзя сохранить</string>
+    <string name="no_location">Текущее местоположение отключено</string>
+    <string name="format_distance_kilometers">%sкм</string>
+    <string name="format_distance_meters">%sм</string>
+    <string name="move_line">Двигайтесь по линии</string>
 </resources>

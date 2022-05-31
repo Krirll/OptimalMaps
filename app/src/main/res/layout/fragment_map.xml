@@ -20,6 +20,70 @@
         android:indeterminateTint="@color/purple_500"
         android:visibility="gone" />
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/navDescriptionBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:background="@drawable/black_corners"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/directionImage"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/barrier"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/black"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/directionTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toTopOf="@+id/lengthDirection"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@id/barrier"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/lengthDirection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:textColor="@color/black"
+                android:textSize="17sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@id/barrier"
+                app:layout_constraintTop_toBottomOf="@+id/directionTitle" />
+
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/barrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:barrierDirection="right"
+                app:constraint_referenced_ids="directionImage" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </RelativeLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/searchButton"
         android:layout_width="match_parent"
@@ -43,7 +107,9 @@
         android:id="@+id/lengthDurationShow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp"
+        android:background="@drawable/black_corners"
         android:padding="10dp"
         android:textColor="@color/black"
         android:textSize="20sp"
@@ -54,9 +120,8 @@
         android:layout_width="65dp"
         android:layout_height="75dp"
         android:layout_gravity="bottom|end"
-        android:layout_marginTop="50dp"
         android:layout_marginEnd="5dp"
-        android:layout_marginBottom="100dp"
+        android:layout_marginBottom="170dp"
         android:backgroundTint="@color/white"
         android:visibility="gone"
         app:cornerRadius="35dp"
@@ -92,5 +157,23 @@
         app:iconGravity="end"
         app:iconSize="35dp"
         app:iconTint="@color/black" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/compass"
+        android:layout_width="60dp"
+        android:layout_height="71dp"
+        android:layout_gravity="start|bottom"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="150dp"
+        android:backgroundTint="@color/black"
+        android:elevation="1dp"
+        android:rotation="-45"
+        android:visibility="gone"
+        app:cornerRadius="35dp"
+        app:icon="@drawable/icon_compass"
+        app:iconGravity="textStart"
+        app:iconPadding="0.5dp"
+        app:iconSize="65dp"
+        app:iconTint="@color/white" />
 
 </FrameLayout>
