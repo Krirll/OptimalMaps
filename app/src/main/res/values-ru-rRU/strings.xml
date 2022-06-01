@@ -49,5 +49,5 @@
     <string name="format_distance_kilometers">%sкм</string>
     <string name="format_distance_meters">%sм</string>
     <string name="move_line">Двигайтесь по линии</string>
-    <string name="max_count_points">Вы можете добавить не более 10 точек</string>
+    <string name="max_count_points">Вы можете добавить не более 7 точек</string>
 </resources>
