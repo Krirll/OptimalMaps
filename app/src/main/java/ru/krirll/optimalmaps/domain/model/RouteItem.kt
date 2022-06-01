@@ -5,5 +5,7 @@ import org.osmdroid.bonuspack.routing.Road
 data class RouteItem(
     val route: Road,
     val points: String,
-    val list: List<PointItem>
+    val startPoint: PointItem,
+    val additionalPoints: List<PointItem>?,
+    val finishPoint: PointItem?
 )

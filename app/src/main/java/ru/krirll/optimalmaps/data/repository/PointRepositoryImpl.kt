@@ -9,6 +9,7 @@ import ru.krirll.optimalmaps.data.database.routeDatabase.RouteHistoryDatabase
 import ru.krirll.optimalmaps.data.database.searchDatabase.SearchHistoryDao
 import ru.krirll.optimalmaps.data.database.searchDatabase.SearchHistoryDatabase
 import ru.krirll.optimalmaps.data.mapper.PointMapper
+import ru.krirll.optimalmaps.data.mapper.RouteMapper
 import ru.krirll.optimalmaps.data.network.ApiFactory
 import ru.krirll.optimalmaps.data.network.SearchApiService
 import ru.krirll.optimalmaps.domain.model.PointItem
@@ -19,7 +20,8 @@ import ru.krirll.optimalmaps.utils.OptimalRouteSearchUtil
 
 class PointRepositoryImpl(
     private val application: Application,
-    private val mapper: PointMapper = PointMapper(),
+    private val pointMapper: PointMapper = PointMapper(),
+    private val routeMapper: RouteMapper = RouteMapper(),
     private val searchHistoryDao: SearchHistoryDao = SearchHistoryDatabase.getInstance(application).searchDao(),
     private val routeHistoryDao: RouteHistoryDao = RouteHistoryDatabase.getInstance(application).routeDao(),
     private val apiService: SearchApiService = ApiFactory.searchApiService,
@@ -35,7 +37,7 @@ class PointRepositoryImpl(
         var result: List<PointItem> = listOf()
         try {
             //get result from api and map result items to PointItem
-            result = apiService.getSearchResult(query, locale).map { mapper.mapPointDtoToPointEntity(it) }
+            result = apiService.getSearchResult(query, locale).map { pointMapper.mapPointDtoToPointEntity(it) }
             if (result.isEmpty())
                 emptyResultEventListener.invoke()
         } catch (t: Throwable) {
@@ -48,7 +50,7 @@ class PointRepositoryImpl(
         //Transformations is needed for editing LiveData
         Transformations.map(searchHistoryDao.getSearchHistory()) { it ->
             it.map {
-                mapper.mapPointDbModelToPointEntity(it)
+                pointMapper.mapPointDbModelToPointEntity(it)
             }
         }
 
@@ -57,7 +59,7 @@ class PointRepositoryImpl(
             if (!checkExist(item.text)) {
                 if (getCount() == 20)
                     deleteEarliestPointItem()
-                insertPointItem(mapper.mapPointEntityToPointDbModel(item))
+                insertPointItem(pointMapper.mapPointEntityToPointDbModel(item))
             }
         }
     }
@@ -65,16 +67,32 @@ class PointRepositoryImpl(
     override fun loadRouteHistory(): LiveData<List<RouteItem>> =
         Transformations.map(routeHistoryDao.getRouteHistory()) { it ->
             it.map {
-                mapper.mapRouteDbModelToRouteEntity(it)
+                routeMapper.mapRouteDbModelToRouteEntity(it)
             }
         }
 
-    override suspend fun saveRoute(route: Road, points: String, list: List<PointItem>) {
+    override suspend fun saveRoute(
+        route: Road,
+        points: String,
+        startPoint: PointItem,
+        additionalPoints: List<PointItem>?,
+        finishPoint: PointItem?
+    ) {
         routeHistoryDao.apply {
-            if (!checkExist(list)) {
+            if (!checkExist(startPoint, additionalPoints, finishPoint)) {
                 if (getCount() == 10)
                     deleteEarliestRoute()
-                saveRoute(mapper.mapRouteEntityToRouteDbModel(RouteItem(route, points, list)))
+                saveRoute(
+                    routeMapper.mapRouteEntityToRouteDbModel(
+                        RouteItem(
+                            route,
+                            points,
+                            startPoint,
+                            additionalPoints,
+                            finishPoint
+                        )
+                    )
+                )
             }
         }
     }

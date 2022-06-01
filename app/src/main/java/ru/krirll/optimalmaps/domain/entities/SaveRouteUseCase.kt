@@ -8,6 +8,10 @@ class SaveRouteUseCase(
     private val repository: PointRepositoryImpl
 ) {
 
-    suspend operator fun invoke(route: Road, points: String, list: List<PointItem>) =
-        repository.saveRoute(route, points, list)
+    suspend operator fun invoke(
+        route: Road, points: String, startPoint: PointItem,
+        additionalPoints: List<PointItem>?,
+        finishPoint: PointItem?
+    ) =
+        repository.saveRoute(route, points, startPoint, additionalPoints, finishPoint)
 }

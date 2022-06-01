@@ -27,6 +27,12 @@ interface PointRepository {
 
     fun loadRouteHistory(): LiveData<List<RouteItem>>
 
-    suspend fun saveRoute(route: Road, points: String, list: List<PointItem>)
+    suspend fun saveRoute(
+        route: Road,
+        points: String,
+        startPoint: PointItem,
+        additionalPoints: List<PointItem>?,
+        finishPoint: PointItem?
+    )
 
 }
