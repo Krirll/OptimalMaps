@@ -499,19 +499,21 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                 }
             }
         }
-        lifecycleScope.launchWhenStarted {
-            routeConstructorViewModel.routeError.collect {
-                createSnackbar(
-                    when (it) {
-                        RouteError.ROUTE_INVALID -> getString(R.string.no_route)
-                        RouteError.ROUTE_TECHNICAL_ISSUE -> getString(R.string.technical_route_error)
-                        RouteError.ROUTE_TOO_BIG -> getString(R.string.too_big_route)
-                        RouteError.MAX_COUNT_OF_POINTS -> getString(R.string.max_count_points)
-                    }
-                )
-                routeConstructorViewModel.clearCurrentListOfPoints()
-                stopNavProgress()
-                stopShowOnMapProgress()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                routeConstructorViewModel.routeError.collect {
+                    createSnackbar(
+                        when (it) {
+                            RouteError.ROUTE_INVALID -> getString(R.string.no_route)
+                            RouteError.ROUTE_TECHNICAL_ISSUE -> getString(R.string.technical_route_error)
+                            RouteError.ROUTE_TOO_BIG -> getString(R.string.too_big_route)
+                            RouteError.MAX_COUNT_OF_POINTS -> getString(R.string.max_count_points)
+                        }
+                    )
+                    routeConstructorViewModel.clearCurrentListOfPoints()
+                    stopNavProgress()
+                    stopShowOnMapProgress()
+                }
             }
         }
     }
