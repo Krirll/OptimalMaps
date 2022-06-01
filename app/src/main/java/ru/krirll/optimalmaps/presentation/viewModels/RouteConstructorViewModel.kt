@@ -85,9 +85,21 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
         currentItem = null
     }
 
+    private fun getCountOfPoints(): Int {
+        var result = 0
+        if (startPoint.value != null) result++
+        if (finishPoint.value != null) result++
+        additionalPoints.value.let { result += it?.size!! }
+        return result
+    }
+
     fun setStartPoint(point: PointItem, isCurrentLocation: Boolean) {
-        if (!contains(point))
-            _startPoint.value = Pair(point, isCurrentLocation)
+        if (!contains(point)) {
+            if (getCountOfPoints() < 10)
+                _startPoint.value = Pair(point, isCurrentLocation)
+            else
+                viewModelScope.launch { _routeError.send(RouteError.MAX_COUNT_OF_POINTS) }
+        }
     }
 
     fun removeStartPoint() {
@@ -98,7 +110,10 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
         if (!contains(point)) {
             if (additionalPoints.value == null)
                 _additionalPoints.value = mutableListOf()
-            _additionalPoints.value?.add(point)
+            if (getCountOfPoints() < 10)
+                _additionalPoints.value?.add(point)
+            else
+                viewModelScope.launch { _routeError.send(RouteError.MAX_COUNT_OF_POINTS) }
         }
     }
 
@@ -115,8 +130,12 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setFinishPoint(point: PointItem) {
-        if (!contains(point))
-            _finishPoint.value = point
+        if (!contains(point)) {
+            if (getCountOfPoints() < 10)
+                _finishPoint.value = point
+            else
+                viewModelScope.launch { _routeError.send(RouteError.MAX_COUNT_OF_POINTS) }
+        }
     }
 
     fun removeFinishPoint() {

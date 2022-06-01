@@ -506,6 +506,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                         RouteError.ROUTE_INVALID -> getString(R.string.no_route)
                         RouteError.ROUTE_TECHNICAL_ISSUE -> getString(R.string.technical_route_error)
                         RouteError.ROUTE_TOO_BIG -> getString(R.string.too_big_route)
+                        RouteError.MAX_COUNT_OF_POINTS -> getString(R.string.max_count_points)
                     }
                 )
                 routeConstructorViewModel.clearCurrentListOfPoints()
@@ -521,7 +522,10 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                 getString(R.string.start_point_route, it.text)
             } ?: ""
             val secondString = additionalPoints.value?.let {
-                getString(R.string.point_count_route, it.size)
+                if (it.size != 0)
+                    getString(R.string.point_count_route, it.size)
+                else
+                    ""
             } ?: ""
             val thirdString = finishPoint.value?.let {
                 getString(R.string.finish_point_route, it.text)
