@@ -211,7 +211,7 @@ class MapFragment : Fragment(), LocationListener {
             )
         }
         icons.recycle()
-        if (length <= 20) {
+        if (length <= 10) {
             mapViewModel.removeLastNode()
             viewBinding.map.apply {
                 overlays.add(mapViewModel.route.value?.first?.mRouteHigh?.let { it ->
