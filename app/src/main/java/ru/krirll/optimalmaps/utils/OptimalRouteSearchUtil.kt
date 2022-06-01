@@ -26,11 +26,11 @@ class OptimalRouteSearchUtil(private val context: Context) {
         var resultRoad: Road? = null
         val pointsCopy = points.toMutableList()
         pointsCopy.removeFirst()
-        if (withEndPoint) {
+        if (withEndPoint && points.size > 2) {
             endPoint = pointsCopy.last()
             pointsCopy.remove(endPoint)
         }
-        if (points.size <= 10) {
+        if (points.size <= 7) {
             val listOfRoads = getAllRoads(points, rm, onErrorEventListener)
             if (listOfRoads != null) {
                 var minRoad: Road? = null
@@ -46,7 +46,7 @@ class OptimalRouteSearchUtil(private val context: Context) {
                         listOfRoads
                     )
                     buffer = res.first
-                    if (withEndPoint) {
+                    if (withEndPoint && endPoint != null) {
                         res =
                             Pair(
                                 res.first,
@@ -55,7 +55,7 @@ class OptimalRouteSearchUtil(private val context: Context) {
                                     getRoad(
                                         arrayListOf(
                                             res.second.mNodes.last().mLocation,
-                                            GeoPoint(endPoint?.lat!!, endPoint.lon)
+                                            GeoPoint(endPoint.lat, endPoint.lon)
                                         ),
                                         rm
                                     )
