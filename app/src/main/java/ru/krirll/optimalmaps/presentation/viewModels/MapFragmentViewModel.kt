@@ -56,7 +56,7 @@ class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
             route.value?.first?.mNodes?.get(currentIndexNode)?.mLocation
         )
         containsPoint?.let {
-            while(containsPoint-- != 0) {
+            while(containsPoint-- != 0 && containsPoint >= 0) {
                 _route.value?.first?.mRouteHigh?.removeFirst()
             }
         }
