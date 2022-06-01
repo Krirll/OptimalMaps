@@ -260,7 +260,13 @@ class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _route.value?.let {
                 if (it.first != null)
-                    saveRouteUseCase.invoke(it.first!!, points, currentListOfPoints)
+                    saveRouteUseCase.invoke(
+                        it.first!!,
+                        points,
+                        startPoint.value?.first!!,
+                        additionalPoints.value,
+                        finishPoint.value
+                    )
             }
         }
     }
