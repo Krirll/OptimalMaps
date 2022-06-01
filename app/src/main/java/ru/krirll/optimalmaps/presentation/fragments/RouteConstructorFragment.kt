@@ -402,13 +402,10 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         listAdapter = RouteListAdapter().apply {
             setOnRouteItemClickListener {
                 routeConstructorViewModel.apply {
-                    startPoint.value = Pair(it.list[0], false)
+                    startPoint.value = Pair(it.startPoint, false)
                     additionalPoints.value = mutableListOf()
-                    it.list.forEachIndexed { index, pointItem ->
-                        if (index != 0 && index != it.list.lastIndex)
-                            additionalPoints.value = additionalPoints.value?.apply { add(pointItem) }
-                    }
-                    finishPoint.value = it.list[it.list.lastIndex]
+                    additionalPoints.value = it.additionalPoints?.toMutableList()
+                    finishPoint.value = it.finishPoint
                     updateCurrentList()
                     route.value = Pair(it.route, null)
                 }
@@ -429,7 +426,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         }
         //observe additional points list
         routeConstructorViewModel.additionalPoints.observe(viewLifecycleOwner) {
-            if (it.size > 0)
+            if (it != null && it.size > 0)
                 viewBinding.additionalLayout.addText.setText(
                     getString(
                         R.string.points_count,
