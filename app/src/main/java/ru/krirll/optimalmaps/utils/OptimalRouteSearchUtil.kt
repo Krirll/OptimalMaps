@@ -22,25 +22,46 @@ class OptimalRouteSearchUtil(private val context: Context) {
         ).apply {
             setMean(OSRMRoadManager.MEAN_BY_FOOT)
         }
+        var endPoint: PointItem? = null
         var resultRoad: Road? = null
-        val withoutFirstListPoints = points.toMutableList()
-        withoutFirstListPoints.removeFirst()
+        val pointsCopy = points.toMutableList()
+        pointsCopy.removeFirst()
+        if (withEndPoint) {
+            endPoint = pointsCopy.last()
+            pointsCopy.remove(endPoint)
+        }
         if (points.size <= 10) {
             val listOfRoads = getAllRoads(points, rm, onErrorEventListener)
             if (listOfRoads != null) {
                 var minRoad: Road? = null
-                var buf: MutableList<Int> = mutableListOf()
+                var buffer: MutableList<Int> = mutableListOf()
 
-                withoutFirstListPoints.forEach { _ -> buf.add(0) }
+                pointsCopy.forEach { _ -> buffer.add(0) }
                 var res: Pair<MutableList<Int>, Road>
                 do {
-                    res = fun1(
-                        buf.toMutableList(),
-                        withoutFirstListPoints,
+                    res = getRoadForCurrentBranch(
+                        buffer.toMutableList(),
+                        pointsCopy,
                         points[0],
                         listOfRoads
                     )
-                    buf = res.first
+                    buffer = res.first
+                    if (withEndPoint) {
+                        res =
+                            Pair(
+                                res.first,
+                                sumRoads(
+                                    res.second,
+                                    getRoad(
+                                        arrayListOf(
+                                            res.second.mNodes.last().mLocation,
+                                            GeoPoint(endPoint?.lat!!, endPoint.lon)
+                                        ),
+                                        rm
+                                    )
+                                )
+                            )
+                    }
                     if (minRoad == null || minRoad.mDuration > res.second.mDuration)
                         minRoad = res.second
                 } while (res.first.count { it == 0 } != res.first.size)
@@ -60,20 +81,20 @@ class OptimalRouteSearchUtil(private val context: Context) {
         return resultRoad
     }
 
-    private fun fun1(
+    private fun getRoadForCurrentBranch(
         listInt: MutableList<Int>,
         listPoints: MutableList<PointItem>,
-        me: PointItem,
+        currentPoint: PointItem,
         listOfRoads: List<Triple<PointItem, PointItem, Road>>
     ): Pair<MutableList<Int>, Road> {
         if (listPoints.size == 1) {
             return Pair(listInt, listOfRoads.first {
-                it.first == me && it.second == listPoints[0]
+                it.first == currentPoint && it.second == listPoints[0]
             }.third)
         } else {
             var myIndex = listInt.first()
             listInt.removeFirst()
-            val res = fun1(
+            val res = getRoadForCurrentBranch(
                 listInt.toMutableList(),
                 mutableListOf<PointItem>().apply {
                     listPoints.forEachIndexed { index, pointItem ->
@@ -91,8 +112,8 @@ class OptimalRouteSearchUtil(private val context: Context) {
                     myIndex = 0
             }
             res.first.add(0, myIndex)
-            return Pair(res.first, sumRoads( listOfRoads.first {
-                it.first == me && it.second == listPoints[oldIndex]
+            return Pair(res.first, sumRoads(listOfRoads.first {
+                it.first == currentPoint && it.second == listPoints[oldIndex]
             }.third, res.second))
         }
     }
