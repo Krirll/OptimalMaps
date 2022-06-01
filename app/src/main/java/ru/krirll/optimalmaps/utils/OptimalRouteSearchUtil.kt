@@ -15,13 +15,6 @@ class OptimalRouteSearchUtil(private val context: Context) {
         points: List<PointItem>,
         withEndPoint: Boolean,
         onErrorEventListener: (RouteError) -> Unit
-    ): Road? =
-        getOptimalRoute(points, withEndPoint, onErrorEventListener)
-
-    private fun getOptimalRoute(
-        points: List<PointItem>,
-        withEndPoint: Boolean = false,
-        onErrorEventListener: (RouteError) -> Unit
     ): Road? {
         val rm = OSRMRoadManager(
             context,
@@ -30,88 +23,136 @@ class OptimalRouteSearchUtil(private val context: Context) {
             setMean(OSRMRoadManager.MEAN_BY_FOOT)
         }
         var resultRoad: Road? = null
-        var startPoint: GeoPoint? = null
-        var secondPoint: GeoPoint? = null
-        if (points.size > 1) {
-            startPoint = GeoPoint(points[0].lat, points[0].lon)
-            secondPoint = GeoPoint(points[1].lat, points[1].lon)
-        }
-        if (points.size == 2) {
-            resultRoad = getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
-            if (resultRoad?.mStatus != Road.STATUS_OK) {
-                sendError(resultRoad?.mStatus!!, onErrorEventListener)
-                resultRoad = null
-            }
-        } else {
-            if (points.size == 3) {
-                val thirdPoint = GeoPoint(points[2].lat, points[2].lon)
-                if (withEndPoint) {
-                    resultRoad = getRoad(arrayListOf(startPoint!!, secondPoint!!, thirdPoint), rm)
-                    if (resultRoad?.mStatus != Road.STATUS_OK) {
-                        sendError(resultRoad.mStatus, onErrorEventListener)
-                        resultRoad = null
-                    }
-                } else {
-                    val firstRoadFromStart = getRoad(arrayListOf(startPoint!!, secondPoint!!), rm)
-                    if (firstRoadFromStart.mStatus == Road.STATUS_OK) {
-                        val secondRoadFromStart = getRoad(arrayListOf(startPoint, thirdPoint), rm)
-                        if (secondRoadFromStart.mStatus == Road.STATUS_OK) {
-                            resultRoad =
-                                getRoad(
-                                    arrayListOf(
-                                        startPoint
-                                    ).apply {
-                                        if (firstRoadFromStart.mDuration > secondRoadFromStart.mDuration) {
-                                            add(thirdPoint)
-                                            add(secondPoint)
-                                        } else {
-                                            add(secondPoint)
-                                            add(thirdPoint)
-                                        }
-                                    },
-                                    rm
-                                )
-                            if (resultRoad?.mStatus != Road.STATUS_OK) {
-                                sendError(resultRoad?.mStatus!!, onErrorEventListener)
-                                resultRoad = null
-                            }
-                        } else
-                            sendError(secondRoadFromStart.mStatus, onErrorEventListener)
-                    } else
-                        sendError(firstRoadFromStart.mStatus, onErrorEventListener)
-                }
-            } else {
-                resultRoad = getOptimalRouteByList(points, withEndPoint, onErrorEventListener)
+        val withoutFirstListPoints = points.toMutableList()
+        withoutFirstListPoints.removeFirst()
+        if (points.size <= 10) {
+            val listOfRoads = getAllRoads(points, rm, onErrorEventListener)
+            if (listOfRoads != null) {
+                var minRoad: Road? = null
+                var buf: MutableList<Int> = mutableListOf()
+
+                withoutFirstListPoints.forEach { _ -> buf.add(0) }
+                var res: Pair<MutableList<Int>, Road>
+                do {
+                    res = fun1(
+                        buf.toMutableList(),
+                        withoutFirstListPoints,
+                        points[0],
+                        listOfRoads
+                    )
+                    buf = res.first
+                    if (minRoad == null || minRoad.mDuration > res.second.mDuration)
+                        minRoad = res.second
+                } while (res.first.count { it == 0 } != res.first.size)
+                resultRoad = minRoad
             }
         }
-        if (resultRoad != null)
-            if (resultRoad.mLength > 1000)
+        if (resultRoad != null) {
+            if (resultRoad.mLength > 1000) {
                 sendError(ROUTE_TOO_BIG, onErrorEventListener)
+            } else {
+                if (resultRoad.mStatus != Road.STATUS_OK) {
+                    sendError(resultRoad.mStatus, onErrorEventListener)
+                    resultRoad = null
+                }
+            }
+        }
         return resultRoad
     }
 
-    private fun getOptimalRouteByList(
-        listOfPoints: List<PointItem>,
-        withEndPoint: Boolean,
+    private fun fun1(
+        listInt: MutableList<Int>,
+        listPoints: MutableList<PointItem>,
+        me: PointItem,
+        listOfRoads: List<Triple<PointItem, PointItem, Road>>
+    ): Pair<MutableList<Int>, Road> {
+        if (listPoints.size == 1) {
+            return Pair(listInt, listOfRoads.first {
+                it.first == me && it.second == listPoints[0]
+            }.third)
+        } else {
+            var myIndex = listInt.first()
+            listInt.removeFirst()
+            val res = fun1(
+                listInt.toMutableList(),
+                mutableListOf<PointItem>().apply {
+                    listPoints.forEachIndexed { index, pointItem ->
+                        if (index != myIndex)
+                            add(pointItem)
+                    }
+                },
+                listPoints[myIndex],
+                listOfRoads
+            )
+            val oldIndex = myIndex
+            if (res.first.count { it == 0 } == res.first.size) {
+                myIndex++
+                if (listPoints.size - 1 < myIndex)
+                    myIndex = 0
+            }
+            res.first.add(0, myIndex)
+            return Pair(res.first, sumRoads( listOfRoads.first {
+                it.first == me && it.second == listPoints[oldIndex]
+            }.third, res.second))
+        }
+    }
+
+    private fun sumRoads(r1: Road, r2: Road): Road =
+        Road().apply {
+            mStatus =
+                if (r1.mStatus == Road.STATUS_OK && r1.mStatus == Road.STATUS_OK)
+                    Road.STATUS_OK
+                else
+                    Road.STATUS_INVALID
+            mLength = r1.mLength + r2.mLength
+            mDuration = r1.mDuration + r2.mDuration
+            mNodes = ArrayList(r1.mNodes + r2.mNodes)
+            mRouteHigh = ArrayList(r1.mRouteHigh + r2.mRouteHigh)
+        }
+
+    private fun getAllRoads(
+        list: List<PointItem>,
+        rm: RoadManager,
         onErrorEventListener: (RouteError) -> Unit
-    ): Road? {
-        val listOfRoads: MutableList<Road>? = null
-        //здесь будет алгоритм
-        /*for (i in points.indices) {
-            val currentPoint = GeoPoint(points[i].lat, points[i].lon)
-            if (i + 1 != points.size) {
-                val nextPoint = GeoPoint(points[i + 1].lat, points[i + 1].lon)
-                listOfRoads?.add(
-                    rm.getRoad(
-                        arrayListOf(
-                            currentPoint,
-                            nextPoint
+    ): List<Triple<PointItem, PointItem, Road>>? {
+        var listOfRoads: MutableList<Triple<PointItem, PointItem, Road>>? = mutableListOf()
+        for (i in list.indices) {
+            if (listOfRoads != null) {
+                for (j in i + 1 until list.size) {
+                    listOfRoads.add(
+                        Triple(
+                            list[i],
+                            list[j],
+                            getRoad(
+                                arrayListOf(
+                                    GeoPoint(list[i].lat, list[i].lon),
+                                    GeoPoint(list[j].lat, list[j].lon)
+                                ),
+                                rm
+                            )
                         )
                     )
-                )
+                    listOfRoads.add(
+                        Triple(
+                            list[j],
+                            list[i],
+                            getRoad(
+                                arrayListOf(
+                                    GeoPoint(list[j].lat, list[j].lon),
+                                    GeoPoint(list[i].lat, list[i].lon)
+                                ),
+                                rm
+                            )
+                        )
+                    )
+                }
             }
-        }*/
-        return null
+        }
+        listOfRoads?.firstOrNull { it.third.mStatus != Road.STATUS_OK }?.let {
+            sendError(it.third.mStatus, onErrorEventListener)
+            listOfRoads = null
+        }
+        return listOfRoads
     }
 
     private fun getRoad(geoPoints: ArrayList<GeoPoint>, roadManager: RoadManager) =
