@@ -1,10 +1,8 @@
 package ru.krirll.optimalmaps.data.database.routeDatabase
 
 import androidx.room.ColumnInfo
-import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadNode
 import org.osmdroid.util.GeoPoint
 import ru.krirll.optimalmaps.domain.model.PointItem
@@ -24,8 +22,14 @@ data class RouteItemDbModel(
     @ColumnInfo(name = "nodes")
     val nodes: List<RoadNode>,
 
-    @ColumnInfo(name = "points_list")
-    val list: List<PointItem>,
+    @ColumnInfo(name = "start_point")
+    val startPoint: PointItem,
+
+    @ColumnInfo(name = "additional_points")
+    var additionalPoints: List<PointItem>? = null,
+
+    @ColumnInfo(name = "finish_point")
+    var finishPoint: PointItem? = null,
 
     @ColumnInfo(name = "points")
     val points: String

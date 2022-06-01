@@ -8,12 +8,22 @@ import ru.krirll.optimalmaps.domain.model.PointItem
 class PointItemConverter {
 
     @TypeConverter
-    fun restorePointItem(list: String): List<PointItem> {
+    fun restorePointItemList(list: String): List<PointItem>? {
         return Gson().fromJson(list, object : TypeToken<List<PointItem>>() {}.type)
     }
 
     @TypeConverter
-    fun savePointItem(list: List<PointItem>): String {
+    fun savePointItemList(list: List<PointItem>?): String {
         return Gson().toJson(list)
+    }
+
+    @TypeConverter
+    fun restorePointItem(item: String): PointItem? {
+        return Gson().fromJson(item, object : TypeToken<PointItem>() {}.type)
+    }
+
+    @TypeConverter
+    fun savePointItem(item: PointItem?): String {
+        return Gson().toJson(item)
     }
 }

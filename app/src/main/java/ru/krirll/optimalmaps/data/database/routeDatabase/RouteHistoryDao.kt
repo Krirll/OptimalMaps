@@ -15,8 +15,12 @@ interface RouteHistoryDao {
     @Query("SELECT * FROM RouteItemDbModel")
     fun getRouteHistory(): LiveData<List<RouteItemDbModel>>
 
-    @Query("SELECT EXISTS(SELECT * FROM RouteItemDbModel WHERE points_list == :points)")
-    suspend fun checkExist(points: List<PointItem>): Boolean
+    @Query("SELECT EXISTS(SELECT * FROM RouteItemDbModel WHERE start_point == :startPoint AND additional_points == :additionalPoints AND finish_point == :finishPoint)")
+    suspend fun checkExist(
+        startPoint: PointItem,
+        additionalPoints: List<PointItem>?,
+        finishPoint: PointItem?
+    ): Boolean
 
     @Query("SELECT COUNT(id) FROM RouteItemDbModel")
     suspend fun getCount(): Int
