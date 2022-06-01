@@ -72,6 +72,7 @@ class MapFragment : Fragment(), LocationListener {
     private var currentMapCenter: GeoPoint? = null //for saving center
     private var currentMapZoom: Double? = null         //for saving zoom
     private var isFixedCurrentLocation: Boolean? = null //for saving current location state
+    private var mapOrientation: Float? = null
 
     private var _viewBinding: FragmentMapBinding? = null
     private val viewBinding: FragmentMapBinding
@@ -144,9 +145,10 @@ class MapFragment : Fragment(), LocationListener {
             currentMapZoom = savedInstanceState.getDouble(CURRENT_MAP_ZOOM)
             //get current location info window state
             isCurrentLocationInfoWindowOpened = savedInstanceState.getBoolean(IS_OPENED, false)
-            viewBinding.map.mapOrientation = savedInstanceState.getFloat(MAP_ROTATION, 0.0f)
-            if (viewBinding.map.mapOrientation != 0.0f) {
+            mapOrientation = savedInstanceState.getFloat(MAP_ROTATION, 0.0f)
+            if (mapOrientation != 0.0f) {
                 viewBinding.compass.visibility = View.VISIBLE
+                viewBinding.map.mapOrientation = mapOrientation ?: 0.0f
             }
         }
     }
@@ -194,7 +196,6 @@ class MapFragment : Fragment(), LocationListener {
     }
 
     private fun updateNavigationInstructions(position: GeoPoint, node: RoadNode) {
-
         val length = getLengthFromPositionToNode(position, node.mLocation)
         val icons = resources.obtainTypedArray(R.array.directions_icons)
         val iconId = icons.getResourceId(node.mManeuverType, R.drawable.ic_empty)
@@ -218,8 +219,10 @@ class MapFragment : Fragment(), LocationListener {
                     buildPolyline(it)
                 })
             }
-            if (mapViewModel.getCurrentIndexNode() == mapViewModel.route.value?.first?.mNodes?.size)
+            if (mapViewModel.getCurrentIndexNode() == mapViewModel.route.value?.first?.mNodes?.size) {
                 mapViewModel.removeRoute()
+                viewBinding.navDescriptionBlock.visibility = View.GONE
+            }
         }
     }
 
@@ -227,7 +230,7 @@ class MapFragment : Fragment(), LocationListener {
         if (length >= 1000.0) {
             getString(
                 R.string.format_distance_kilometers,
-                length.toInt().toString()
+                (length / 1000).toInt().toString()
             )
         } else {
             getString(
@@ -771,6 +774,7 @@ class MapFragment : Fragment(), LocationListener {
         viewBinding.map.onPause()
         locationManager?.removeUpdates(this)
         alertDialog?.dismiss()
+        mapOrientation = viewBinding.map.mapOrientation
         super.onPause()
     }
 
@@ -795,7 +799,7 @@ class MapFragment : Fragment(), LocationListener {
         )
         outState.putDouble(CURRENT_MAP_ZOOM, currentMapZoom ?: DEFAULT_ZOOM) //save current map zoom
         outState.putBoolean(IS_OPENED, isCurrentLocationInfoWindowOpened)
-        outState.putFloat(MAP_ROTATION, viewBinding.map.mapOrientation)
+        outState.putFloat(MAP_ROTATION, mapOrientation ?: 0.0f)
         super.onSaveInstanceState(outState)
     }
 
