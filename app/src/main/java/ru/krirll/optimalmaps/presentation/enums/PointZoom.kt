@@ -31,13 +31,12 @@ enum class PointZoom(private val importance: Double, val zoom: Double) {
 
         fun getZoomByRouteLength(length: Double): Double =
             when(length.toInt()) {
-                in 0..2 -> SMALL_3.zoom
-                in 3..5 -> SMALL_3.zoom
-                in 5..7 -> MEDIUM_1.zoom
-                in 7..10 -> MEDIUM_2.zoom
-                in 10..15 -> MEDIUM_3.zoom
-                in 15..100 -> LARGE_1.zoom
-                in 100..200 -> LARGE_2.zoom
+                in 0..5 -> SMALL_3.zoom
+                in 5..10 -> MEDIUM_1.zoom
+                in 10..15 -> MEDIUM_2.zoom
+                in 15..200 -> MEDIUM_3.zoom
+                in 200..500 -> LARGE_1.zoom
+                in 500..1500 -> LARGE_2.zoom
                 else -> LARGE_3.zoom
             }
     }
