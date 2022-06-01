@@ -21,6 +21,7 @@ import ru.krirll.optimalmaps.presentation.adapters.additionalAdapter.AdditionalP
 import ru.krirll.optimalmaps.presentation.dialogFragment.RoutePointDialog
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
 import ru.krirll.optimalmaps.presentation.enums.PointMode
+import ru.krirll.optimalmaps.presentation.enums.RouteError
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 import ru.krirll.optimalmaps.presentation.viewModels.RouteConstructorViewModel
 
@@ -195,6 +196,17 @@ class AdditionalPointsListFragment : Fragment() {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 routeConstructorViewModel.pointError.collect {
                     createSnackbar(getString(R.string.double_additional_point))
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                routeConstructorViewModel.routeError.collect {
+                    createSnackbar(
+                        when (it) {
+                            RouteError.MAX_COUNT_OF_POINTS -> getString(R.string.max_count_points)
+                            else -> ""
+                        })
                 }
             }
         }
