@@ -190,7 +190,7 @@ class AdditionalPointsListFragment : Fragment() {
 
     private fun observeRouteConstructorViewModel() {
         routeConstructorViewModel.additionalPoints.observe(viewLifecycleOwner) {
-            listAdapter?.submitList(it.toList())
+            it?.let { listAdapter?.submitList(it.toList()) }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
