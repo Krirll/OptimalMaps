@@ -79,7 +79,7 @@ class PointRepositoryImpl(
         finishPoint: PointItem?
     ) {
         routeHistoryDao.apply {
-            if (!checkExist(startPoint, additionalPoints, finishPoint)) {
+            if (!checkExist(route.mRouteHigh)) {
                 if (getCount() == 10)
                     deleteEarliestRoute()
                 saveRoute(
