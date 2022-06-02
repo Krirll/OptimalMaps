@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import ru.krirll.optimalmaps.domain.model.PointItem
+import org.osmdroid.util.GeoPoint
 
 @Dao
 interface RouteHistoryDao {
@@ -15,11 +15,9 @@ interface RouteHistoryDao {
     @Query("SELECT * FROM RouteItemDbModel")
     fun getRouteHistory(): LiveData<List<RouteItemDbModel>>
 
-    @Query("SELECT EXISTS(SELECT * FROM RouteItemDbModel WHERE start_point == :startPoint AND additional_points == :additionalPoints AND finish_point == :finishPoint)")
+    @Query("SELECT EXISTS(SELECT * FROM RouteItemDbModel WHERE polyline == :polyline)")
     suspend fun checkExist(
-        startPoint: PointItem,
-        additionalPoints: List<PointItem>?,
-        finishPoint: PointItem?
+        polyline: List<GeoPoint>
     ): Boolean
 
     @Query("SELECT COUNT(id) FROM RouteItemDbModel")
