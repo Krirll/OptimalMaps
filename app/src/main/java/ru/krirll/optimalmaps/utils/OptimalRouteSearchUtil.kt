@@ -69,13 +69,11 @@ class OptimalRouteSearchUtil(private val context: Context) {
             }
         }
         if (resultRoad != null) {
-            if (resultRoad.mLength > 1000) {
+            if (resultRoad.mLength > 1000)
                 sendError(ROUTE_TOO_BIG, onErrorEventListener)
-            } else {
-                if (resultRoad.mStatus != Road.STATUS_OK) {
-                    sendError(resultRoad.mStatus, onErrorEventListener)
-                    resultRoad = null
-                }
+            if (resultRoad.mStatus != Road.STATUS_OK) {
+                sendError(resultRoad.mStatus, onErrorEventListener)
+                resultRoad = null
             }
         }
         return resultRoad
