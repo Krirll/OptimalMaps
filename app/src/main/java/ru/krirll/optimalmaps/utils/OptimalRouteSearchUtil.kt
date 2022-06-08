@@ -18,9 +18,10 @@ class OptimalRouteSearchUtil(private val context: Context) {
     ): Road? {
         val rm = OSRMRoadManager(
             context,
-            BuildConfig.APPLICATION_ID + "/" + BuildConfig.VERSION_NAME
+            BuildConfig.APPLICATION_ID
         ).apply {
             setMean(OSRMRoadManager.MEAN_BY_FOOT)
+            setService("http://routing.openstreetmap.de/")
         }
         var endPoint: PointItem? = null
         var resultRoad: Road? = null
