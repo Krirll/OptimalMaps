@@ -67,7 +67,7 @@ class MapPointChoiceFragment : Fragment() {
     }
 
     private fun setMapViewModelLocale() {
-        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0]!!.toLanguageTag())
         mapViewModel.setLocale(Locale.getLocale(currentLocale))
     }
 

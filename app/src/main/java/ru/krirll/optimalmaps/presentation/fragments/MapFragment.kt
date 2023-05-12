@@ -127,7 +127,7 @@ class MapFragment : Fragment(), LocationListener {
     }
 
     private fun setViewModelLocale() {
-        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0]!!.toLanguageTag())
         mapViewModel.setLocale(Locale.getLocale(currentLocale))
     }
 

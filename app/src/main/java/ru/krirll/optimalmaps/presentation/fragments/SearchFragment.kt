@@ -61,7 +61,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun setViewModelLocale() {
-        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        val currentLocale = Locale.getLocale(LocaleListCompat.getDefault()[0]!!.toLanguageTag())
         searchViewModel.setLocale(Locale.getLocale(currentLocale))
     }
 
