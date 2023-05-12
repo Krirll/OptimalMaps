@@ -64,7 +64,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     private var alertDialogTitle: TitleAlertDialog? = null
 
     private val currentLocale by lazy {
-        Locale.getLocale(LocaleListCompat.getDefault()[0].toLanguageTag())
+        Locale.getLocale(LocaleListCompat.getDefault()[0]!!.toLanguageTag())
     }
 
     private var locationManager: LocationManager? = null
