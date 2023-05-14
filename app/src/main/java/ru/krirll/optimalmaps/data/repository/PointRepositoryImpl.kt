@@ -2,7 +2,7 @@ package ru.krirll.optimalmaps.data.repository
 
 import android.app.Application
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.data.database.routeDatabase.RouteHistoryDao
 import ru.krirll.optimalmaps.data.database.routeDatabase.RouteHistoryDatabase
@@ -48,11 +48,16 @@ class PointRepositoryImpl(
 
     override fun loadSearchHistory(): LiveData<List<PointItem>> =
         //Transformations is needed for editing LiveData
-        Transformations.map(searchHistoryDao.getSearchHistory()) { it ->
-            it.map {
+        searchHistoryDao.getSearchHistory().map { list ->
+            list.map {
                 pointMapper.mapPointDbModelToPointEntity(it)
             }
         }
+        /*Transformations.map(searchHistoryDao.getSearchHistory()) { it ->
+            it.map {
+                pointMapper.mapPointDbModelToPointEntity(it)
+            }
+        }*/
 
     override suspend fun savePointItem(item: PointItem) {
         searchHistoryDao.apply {
@@ -65,8 +70,8 @@ class PointRepositoryImpl(
     }
 
     override fun loadRouteHistory(): LiveData<List<RouteItem>> =
-        Transformations.map(routeHistoryDao.getRouteHistory()) { it ->
-            it.map {
+        routeHistoryDao.getRouteHistory().map { list ->
+            list.map {
                 routeMapper.mapRouteDbModelToRouteEntity(it)
             }
         }
