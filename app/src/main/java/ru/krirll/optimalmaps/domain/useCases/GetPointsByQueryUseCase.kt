@@ -1,4 +1,4 @@
-package ru.krirll.optimalmaps.domain.entities
+package ru.krirll.optimalmaps.domain.useCases
 
 import ru.krirll.optimalmaps.domain.repository.RemoteRepository
 

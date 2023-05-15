@@ -1,11 +1,11 @@
-package ru.krirll.optimalmaps.domain.entities
+package ru.krirll.optimalmaps.domain.useCases
 
 import org.osmdroid.bonuspack.routing.Road
-import ru.krirll.optimalmaps.data.repository.LocalRepositoryImpl
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.domain.repository.LocalRepository
 
 class SaveRouteUseCase(
-    private val repository: LocalRepositoryImpl
+    private val repository: LocalRepository
 ) {
 
     suspend operator fun invoke(
