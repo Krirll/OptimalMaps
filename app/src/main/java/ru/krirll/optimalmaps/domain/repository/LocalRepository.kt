@@ -6,14 +6,7 @@ import ru.krirll.optimalmaps.domain.model.PointItem
 import ru.krirll.optimalmaps.domain.model.RouteItem
 import ru.krirll.optimalmaps.presentation.enums.RouteError
 
-interface PointRepository {
-
-    suspend fun getSearchResult(
-        query: String,
-        locale: String,
-        emptyResultEventListener: () -> Unit,
-        noInternetEventListener: () -> Unit,
-    ): List<PointItem>
+interface LocalRepository {
 
     fun loadSearchHistory(): LiveData<List<PointItem>>
 
