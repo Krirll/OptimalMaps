@@ -1,10 +1,10 @@
-package ru.krirll.optimalmaps.domain.entities
+package ru.krirll.optimalmaps.domain.useCases
 
 import ru.krirll.optimalmaps.domain.model.PointItem
-import ru.krirll.optimalmaps.domain.repository.PointRepository
+import ru.krirll.optimalmaps.domain.repository.LocalRepository
 
 class SavePointItemUseCase(
-    private val repository: PointRepository
+    private val repository: LocalRepository
 ) {
 
     suspend operator fun invoke(item: PointItem) {

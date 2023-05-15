@@ -1,11 +1,11 @@
-package ru.krirll.optimalmaps.domain.entities
+package ru.krirll.optimalmaps.domain.useCases
 
-import ru.krirll.optimalmaps.domain.repository.PointRepository
+import ru.krirll.optimalmaps.domain.repository.RemoteRepository
 
 class GetPointsByQueryUseCase(
-    private val repository: PointRepository
+    private val repository: RemoteRepository
 ) {
-
+    
     suspend operator fun invoke(
         query: String,
         locale: String,
