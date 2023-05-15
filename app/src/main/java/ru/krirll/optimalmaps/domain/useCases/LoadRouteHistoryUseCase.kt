@@ -1,9 +1,9 @@
 package ru.krirll.optimalmaps.domain.entities
 
-import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
+import ru.krirll.optimalmaps.domain.repository.LocalRepository
 
 class LoadRouteHistoryUseCase(
-    private val repository: PointRepositoryImpl
+    private val repository: LocalRepository
 ) {
 
     operator fun invoke() = repository.loadRouteHistory()
