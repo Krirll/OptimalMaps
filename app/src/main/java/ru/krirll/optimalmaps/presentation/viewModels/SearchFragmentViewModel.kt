@@ -8,11 +8,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
-import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
-import ru.krirll.optimalmaps.domain.entities.LoadSearchHistoryUseCase
-import ru.krirll.optimalmaps.domain.entities.SavePointItemUseCase
+import ru.krirll.optimalmaps.data.repository.LocalRepositoryImpl
+import ru.krirll.optimalmaps.data.repository.RemoteRepositoryImpl
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.domain.repository.LocalRepository
+import ru.krirll.optimalmaps.domain.repository.RemoteRepository
+import ru.krirll.optimalmaps.domain.useCases.GetPointsByQueryUseCase
+import ru.krirll.optimalmaps.domain.useCases.LoadSearchHistoryUseCase
+import ru.krirll.optimalmaps.domain.useCases.SavePointItemUseCase
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
 
 class SearchFragmentViewModel(
@@ -28,10 +31,11 @@ class SearchFragmentViewModel(
     }
 
     //init repository and use cases
-    private val repository: PointRepositoryImpl = PointRepositoryImpl(app)
-    private val getSearchByQueryUseCase: GetPointsByQueryUseCase = GetPointsByQueryUseCase(repository)
-    private val loadSearchHistoryUseCase: LoadSearchHistoryUseCase = LoadSearchHistoryUseCase(repository)
-    private val savePointItemUseCase: SavePointItemUseCase = SavePointItemUseCase(repository)
+    private val localRepository: LocalRepository = LocalRepositoryImpl(app)
+    private val remoteRepository: RemoteRepository = RemoteRepositoryImpl()
+    private val getSearchByQueryUseCase: GetPointsByQueryUseCase = GetPointsByQueryUseCase(remoteRepository)
+    private val loadSearchHistoryUseCase: LoadSearchHistoryUseCase = LoadSearchHistoryUseCase(localRepository)
+    private val savePointItemUseCase: SavePointItemUseCase = SavePointItemUseCase(localRepository)
 
     private var locale: String = ""
 

@@ -11,10 +11,10 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.routing.Road
-import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
-import ru.krirll.optimalmaps.domain.entities.GetOptimalRouteUseCase
-import ru.krirll.optimalmaps.domain.entities.LoadRouteHistoryUseCase
-import ru.krirll.optimalmaps.domain.entities.SaveRouteUseCase
+import ru.krirll.optimalmaps.data.repository.LocalRepositoryImpl
+import ru.krirll.optimalmaps.domain.useCases.GetOptimalRouteUseCase
+import ru.krirll.optimalmaps.domain.useCases.LoadRouteHistoryUseCase
+import ru.krirll.optimalmaps.domain.useCases.SaveRouteUseCase
 import ru.krirll.optimalmaps.domain.model.PointItem
 import ru.krirll.optimalmaps.domain.model.RouteItem
 import ru.krirll.optimalmaps.presentation.enums.PointError
@@ -26,7 +26,7 @@ import java.text.DecimalFormat
 
 class RouteConstructorViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val repository = PointRepositoryImpl(app)
+    private val repository = LocalRepositoryImpl(app)
     private val getOptimalRouteUseCase = GetOptimalRouteUseCase(repository)
     private val loadRouteHistoryUseCase = LoadRouteHistoryUseCase(repository)
     private val saveRouteUseCase = SaveRouteUseCase(repository)

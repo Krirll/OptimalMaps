@@ -1,24 +1,23 @@
 package ru.krirll.optimalmaps.presentation.viewModels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.routing.Road
-import ru.krirll.optimalmaps.data.repository.PointRepositoryImpl
-import ru.krirll.optimalmaps.domain.entities.GetPointsByQueryUseCase
+import ru.krirll.optimalmaps.data.repository.RemoteRepositoryImpl
 import ru.krirll.optimalmaps.domain.model.PointItem
+import ru.krirll.optimalmaps.domain.useCases.GetPointsByQueryUseCase
 import ru.krirll.optimalmaps.presentation.enums.NetworkError
 import ru.krirll.optimalmaps.presentation.enums.PointMode
 import ru.krirll.optimalmaps.presentation.enums.RouteMode
 
-class MapFragmentViewModel(app: Application) : AndroidViewModel(app) {
+class MapFragmentViewModel : ViewModel() {
 
     //init repository and use case
-    private val repository: PointRepositoryImpl = PointRepositoryImpl(app)
+    private val repository: RemoteRepositoryImpl = RemoteRepositoryImpl()
     private val getSearchByQueryUseCase: GetPointsByQueryUseCase = GetPointsByQueryUseCase(repository)
 
     //channel for sending errors
