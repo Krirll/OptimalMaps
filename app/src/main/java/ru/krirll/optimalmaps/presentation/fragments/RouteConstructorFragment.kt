@@ -1,41 +1,35 @@
 package ru.krirll.optimalmaps.presentation.fragments
 
-import android.annotation.SuppressLint
-import android.app.AlertDialog
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.routing.Road
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentRouteConstructorBinding
 import ru.krirll.optimalmaps.presentation.adapters.routeAdapter.RouteListAdapter
 import ru.krirll.optimalmaps.presentation.dialogFragment.RoutePointDialog
-import ru.krirll.optimalmaps.presentation.enums.*
+import ru.krirll.optimalmaps.presentation.enums.Locale
+import ru.krirll.optimalmaps.presentation.enums.NetworkError
+import ru.krirll.optimalmaps.presentation.enums.PointError
+import ru.krirll.optimalmaps.presentation.enums.PointMode
+import ru.krirll.optimalmaps.presentation.enums.RouteError
+import ru.krirll.optimalmaps.presentation.enums.RouteMode
+import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 import ru.krirll.optimalmaps.presentation.viewModels.RouteConstructorViewModel
 
-class RouteConstructorFragment : Fragment(), LocationListener {
+class RouteConstructorFragment: BaseFragmentLocationSupport() {
 
     private var _viewBinding: FragmentRouteConstructorBinding? = null
     private val viewBinding: FragmentRouteConstructorBinding
@@ -49,31 +43,20 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         ViewModelProvider(requireActivity())[MapFragmentViewModel::class.java]
     }
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (!isGranted)
-                createAlertDialogLocationPermissionDenied()
-        }
-
     private var listAdapter: RouteListAdapter? = null
-
     private var dialog: RoutePointDialog? = null
-    private var dialogMode: PointMode? = null
 
-    private var alertDialog: AlertDialog? = null
-    private var alertDialogTitle: TitleAlertDialog? = null
+    private var dialogMode: PointMode? = null
 
     private val currentLocale by lazy {
         Locale.getLocale(LocaleListCompat.getDefault()[0]!!.toLanguageTag())
     }
 
-    private var locationManager: LocationManager? = null
     private var isCurrentLocationEvent: Boolean = false
     private var isShowingStartPointProgress: Boolean = false
     private var isShowingStartNavProgress: Boolean = false
     private var isShowingShowOnMapProgress: Boolean = false
     private var isShowingSavedRoutes: Boolean = false
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -85,7 +68,6 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         getSavedValues(savedInstanceState)
-        initLocationManager()
         initBackButton()
         initStartButton()
         initShowOnMapButton()
@@ -100,18 +82,18 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         observeRouteConstructorViewModel()
     }
 
+    override fun onResume() {
+        startService()
+        tryUpdateLocation()
+        super.onResume()
+    }
+
     private fun setMapViewModelLocale() {
         mapViewModel.setLocale(Locale.getLocale(currentLocale))
     }
 
     private fun setSearchViewModelLocale() {
         mapViewModel.setLocale(Locale.getLocale(currentLocale))
-    }
-
-    override fun onResume() {
-        super.onResume()
-        locationManager?.removeUpdates(this)
-        tryUpdateLocationManager()
     }
 
     private fun startPointProgress() {
@@ -173,29 +155,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         isShowingStartNavProgress = false
     }
 
-    @SuppressLint("MissingPermission")
-    private fun tryUpdateLocationManager() {
-        if (checkSelfPermissionLocation() && getLocationMode() == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
-            alertDialogTitle = null
-            locationManager?.removeUpdates(this)
-            locationManager?.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                1000L,
-                0.5F,
-                this
-            )
-            locationManager?.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                1000L,
-                0.5F,
-                this
-            )
-            if (isCurrentLocationEvent)
-                startPointProgress()
-        }
-    }
-
-    override fun onLocationChanged(location: Location) {
+    override fun updateLocation(location: Location) {
         if (isCurrentLocationEvent) {
             mapViewModel.getPointByLatLon(
                 location.latitude,
@@ -206,139 +166,18 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         isCurrentLocationEvent = false
     }
 
-    override fun onProviderEnabled(provider: String) {
-        //this method must be override
-    }
-
-    override fun onProviderDisabled(provider: String) {
+    override fun setStateProviderDisabled() {
         if (routeConstructorViewModel.startPoint.value?.second == true)
             routeConstructorViewModel.removeStartPoint()
         stopPointProgress()
         isCurrentLocationEvent = false
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-        //this method must be override because minSDK is 22
-    }
-
-    private fun initLocationManager() {
-        locationManager =
-            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    }
-
-    private fun checkSelfPermissionLocation() =
-        ContextCompat.checkSelfPermission(
-            requireContext(),
-            android.Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-    private fun getLocationMode(): Int =
-        Settings.Secure.getInt(requireActivity().contentResolver, Settings.Secure.LOCATION_MODE)
-
-    private fun checkLocationPermissionAndRequestUpdates() {
-        if (checkPermission()) {
-            when (getLocationMode()) {
-                Settings.Secure.LOCATION_MODE_OFF -> createAlertDialogGeoPositionDisabled()
-                Settings.Secure.LOCATION_MODE_HIGH_ACCURACY -> tryUpdateLocationManager()
-                else -> createAlertDialogChangeLocationMode()
-            }
-        }
-    }
-
-    //check location permission
-    private fun checkPermission(): Boolean {
-        var result = false
-        when {
-            //if granted
-            checkSelfPermissionLocation() -> {
-                result = true
-            }
-            //if was denied and should show rationale
-            shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
-                createAlertDialogLocationPermissionDenied()
-            }
-            //if was denied
-            else ->
-                requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-        return result
-    }
-
-    private fun createAlertDialogLocationPermissionDenied() {
-        createAlertDialog(
-            TitleAlertDialog.LOCATION_PERMISSION_DENIED,
-            getString(R.string.location_rationale)
-        ) {
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts(
-                        "package",
-                        requireActivity().packageName,
-                        null
-                    ) //uri of this application settings
-                )
-            )
-            clearDialog()
-        }
-    }
-
-    private fun createAlertDialogGeoPositionDisabled() {
-        createAlertDialog(
-            TitleAlertDialog.GEO_POSITION_DISABLED,
-            getString(R.string.location_disabled)
-        ) {
-            //open location settings
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            clearDialog()
-        }
-    }
-
-    private fun createAlertDialogChangeLocationMode() {
-        createAlertDialog(
-            TitleAlertDialog.CHANGE_LOCATION_MODE,
-            getString(R.string.change_location_mode)
-        ) {
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            clearDialog()
-        }
-    }
-
-    private fun createAlertDialogByTitle(savedTitle: TitleAlertDialog?) {
-        if (savedTitle != null)
-            when (alertDialogTitle) {
-                TitleAlertDialog.GEO_POSITION_DISABLED -> createAlertDialogGeoPositionDisabled()
-                TitleAlertDialog.LOCATION_PERMISSION_DENIED -> createAlertDialogLocationPermissionDenied()
-                TitleAlertDialog.CHANGE_LOCATION_MODE -> createAlertDialogChangeLocationMode()
-                else -> throw RuntimeException("Unknown title $alertDialogTitle")
-            }
-    }
-
-    private fun createAlertDialog(
-        title: TitleAlertDialog,
-        message: String,
-        positiveFunction: (() -> Unit)? = null
-    ) {
-        if (alertDialog?.isShowing == true)
-            alertDialog?.dismiss()
-        alertDialog =
-            AlertDialog.Builder(requireContext())
-                .setMessage(message)
-                .setTitle(title.stringRes)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok) { dialog, _ ->
-                    dialog.dismiss()
-                    alertDialogTitle = null
-                    positiveFunction?.invoke()
-                }
-                .setNegativeButton(R.string.cancel) { dialog, _ ->
-                    dialog.dismiss()
-                    alertDialogTitle = null
-                }
-                .create()
-        alertDialog?.show()
-        alertDialogTitle = title
+    private fun tryUpdateLocation() {
+        alertDialogTitle = null
+        locationService?.tryUpdateLocation()
+        if (isCurrentLocationEvent)
+            startPointProgress()
     }
 
     private fun initBackButton() {
@@ -577,17 +416,6 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         }
     }
 
-    private fun createSnackbar(message: String) {
-        view?.let {
-            Snackbar.make(
-                it,
-                message,
-                Snackbar.LENGTH_LONG
-            ).apply {
-                animationMode = Snackbar.ANIMATION_MODE_SLIDE
-            }.show()
-        }
-    }
 
     private fun createDialogByMode(mode: PointMode) {
         when (mode) {
@@ -596,7 +424,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                     {
                         clearDialog()
                         isCurrentLocationEvent = true
-                        checkLocationPermissionAndRequestUpdates()
+                        tryUpdateLocation()
                     },
                     {
                         clearDialog()
@@ -639,9 +467,7 @@ class RouteConstructorFragment : Fragment(), LocationListener {
                     }
                 )
             }
-            else -> {
-                /*ADDITIONAL_POINT_IN_LIST mode is needed only in AdditionalPointsListFragment*/
-            }
+            else -> {}
         }
     }
 
@@ -673,7 +499,6 @@ class RouteConstructorFragment : Fragment(), LocationListener {
         else
             dialogMode = null
         alertDialog?.dismiss()
-        locationManager?.removeUpdates(this)
     }
 
     override fun onDestroyView() {
@@ -684,10 +509,17 @@ class RouteConstructorFragment : Fragment(), LocationListener {
     private fun getSavedValues(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
             //get saved title of alert dialog
-            alertDialogTitle = savedInstanceState.getParcelable(TITLE)
-            createAlertDialogByTitle(alertDialogTitle)
+            alertDialogTitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                savedInstanceState.getParcelable(TITLE, TitleAlertDialog::class.java)
+            else
+                savedInstanceState.getParcelable(TITLE)
+
+            alertDialogTitle?.let { createAlertDialogByTitle(it) }
             //get saved mode of dialog fragment
-            dialogMode = savedInstanceState.getParcelable(ROUTE_POINT_DIALOG_MODE)
+            dialogMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                savedInstanceState.getParcelable(ROUTE_POINT_DIALOG_MODE, PointMode::class.java)
+            else
+                savedInstanceState.getParcelable(ROUTE_POINT_DIALOG_MODE)
             dialogMode?.let { createDialogByMode(it) }
             //get saved event state
             isCurrentLocationEvent = savedInstanceState.getBoolean(IS_CURRENT_LOCATION_EVENT)

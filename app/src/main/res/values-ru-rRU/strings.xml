@@ -4,7 +4,6 @@
     <string name="search">Поиск</string>
     <string name="default_point">default_point</string>
     <string name="history_point">history_point</string>
-    <string name="change_location_mode">Включите режим определения местоположения с высокой точностью для наилучшей работы</string>
     <string name="no_search_result">Нет результатов по данному запросу</string>
     <string name="empty_query">Пустой запрос</string>
     <string name="error">Ошибка</string>
@@ -13,7 +12,7 @@
     <string name="cancel">Отмена</string>
     <string name="title_location_permission">Разрешение</string>
     <string name="title_geo_position">Геолокация</string>
-    <string name="location_disabled">Геолокация должна быть включена</string>
+    <string name="location_disabled">Геолокация должна быть включена!\nВключите режим высокой точности определения местоположения для наилучшей работы</string>
     <string name="location_mode">Режим определения местоположения</string>
     <string name="no_info_about_point">Нет информации по заданной точке</string>
     <string name="your_position">Ваше местоположение</string>
