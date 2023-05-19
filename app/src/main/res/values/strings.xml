@@ -4,14 +4,13 @@
     <string name="search">Search</string>
     <string name="default_point">default_point</string>
     <string name="history_point">history_point</string>
-    <string name="change_location_mode">Turn on the high accuracy location mode for the best work</string>
     <string name="no_search_result">No results for this query</string>
     <string name="empty_query">Empty query</string>
     <string name="error">Error</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="location_rationale">The fine location permission is required to show your fine location on map</string>
-    <string name="location_disabled">Geolocation must be enabled</string>
+    <string name="location_disabled">Geolocation must be enabled!\nTurn on the high accuracy location mode for the best work</string>
     <string name="title_location_permission">Permission</string>
     <string name="title_geo_position">GeoPosition</string>
     <string name="location_mode">Location mode</string>
