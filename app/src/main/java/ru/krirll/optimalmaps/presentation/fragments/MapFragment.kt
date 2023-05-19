@@ -285,8 +285,7 @@ class MapFragment: BaseFragmentLocationSupport() {
     private fun setColor(color: Int, drawable: Drawable?) {
         drawable?.setTint(getColor(requireContext(), color))
     }
-
-    //todo в отдельном классе и абстрактно
+    
     private fun tryUpdateCurrentLocationMarker() {
         alertDialogTitle = null
         val marker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)

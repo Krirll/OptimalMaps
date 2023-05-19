@@ -416,7 +416,7 @@ class RouteConstructorFragment: BaseFragmentLocationSupport() {
         }
     }
 
-    //todo переделать!!!!!!!!!!!!!!11
+
     private fun createDialogByMode(mode: PointMode) {
         when (mode) {
             PointMode.START_POINT -> {
@@ -471,7 +471,6 @@ class RouteConstructorFragment: BaseFragmentLocationSupport() {
         }
     }
 
-    //todo почитать про диалог-фрагменты и какой у них жизненный цикл
     private fun clearDialog() {
         dialog?.dismiss()
         dialogMode = null
