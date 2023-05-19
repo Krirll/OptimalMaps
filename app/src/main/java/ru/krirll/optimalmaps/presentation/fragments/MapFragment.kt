@@ -1,33 +1,22 @@
 package ru.krirll.optimalmaps.presentation.fragments
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
-import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getColor
 import androidx.core.os.LocaleListCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
@@ -43,30 +32,24 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import ru.krirll.optimalmaps.R
 import ru.krirll.optimalmaps.databinding.FragmentMapBinding
-import ru.krirll.optimalmaps.presentation.enums.*
+import ru.krirll.optimalmaps.presentation.enums.Locale
+import ru.krirll.optimalmaps.presentation.enums.NetworkError
+import ru.krirll.optimalmaps.presentation.enums.PointId
+import ru.krirll.optimalmaps.presentation.enums.PointMode
+import ru.krirll.optimalmaps.presentation.enums.PointZoom
+import ru.krirll.optimalmaps.presentation.enums.RouteMode
+import ru.krirll.optimalmaps.presentation.enums.TitleAlertDialog
 import ru.krirll.optimalmaps.presentation.infoWindow.DefaultInfoWindow
 import ru.krirll.optimalmaps.presentation.rotationOverlay.RotationOverlay
 import ru.krirll.optimalmaps.presentation.viewModels.MapFragmentViewModel
 
-class MapFragment : Fragment(), LocationListener {
+class MapFragment: BaseFragmentLocationSupport() {
 
     // create/get MapFragmentViewModel in AppActivity context
     private val mapViewModel by lazy {
         ViewModelProvider(requireActivity())[MapFragmentViewModel::class.java]
     }
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (!isGranted)
-                createAlertDialogLocationPermissionDenied()
-            else
-                tryUpdateLocationManager()
-        }
-
-    private var alertDialog: AlertDialog? = null
-    private var alertDialogTitle: TitleAlertDialog? = null
-
-    private var locationManager: LocationManager? = null
     private var isCurrentLocationInfoWindowOpened = false
 
     private var currentMapCenter: GeoPoint? = null //for saving center
@@ -95,9 +78,14 @@ class MapFragment : Fragment(), LocationListener {
         initRouteButton()
         initCancelButton()
         initCompass()
-        initLocationManager()
         initCurrentLocationButton()
         observeViewModel()
+    }
+
+    override fun onResume() {
+        startService()
+        tryUpdateLocation()
+        super.onResume()
     }
 
     private fun initCompass() {
@@ -105,11 +93,6 @@ class MapFragment : Fragment(), LocationListener {
             viewBinding.map.mapOrientation = 0.0f
             viewBinding.compass.visibility = View.GONE
         }
-    }
-
-    override fun onResume() {
-        tryUpdateLocationManager()
-        super.onResume()
     }
 
     private fun initRouteButton() {
@@ -134,8 +117,12 @@ class MapFragment : Fragment(), LocationListener {
     private fun getSavedValues(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
             //get saved title of alert dialog
-            alertDialogTitle = savedInstanceState.getParcelable(TITLE)
-            createAlertDialogByTitle(alertDialogTitle)
+            alertDialogTitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                savedInstanceState.getParcelable(TITLE, TitleAlertDialog::class.java)
+            else
+                savedInstanceState.getParcelable(TITLE)
+
+            alertDialogTitle?.let { createAlertDialogByTitle(it) }
             //get current location state
             isFixedCurrentLocation = savedInstanceState.getBoolean(IS_FIXED_CURRENT_LOCATION)
             //get current map center and zoom
@@ -161,12 +148,7 @@ class MapFragment : Fragment(), LocationListener {
         viewBinding.progress.visibility = View.GONE
     }
 
-    private fun initLocationManager() {
-        locationManager =
-            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    }
-
-    override fun onLocationChanged(location: Location) {
+    override fun updateLocation(location: Location) {
         stopProgress()
         val geoPoint = GeoPoint(location.latitude, location.longitude)
         val currentPositionMarker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)
@@ -179,7 +161,7 @@ class MapFragment : Fragment(), LocationListener {
             setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
         addMarkerOnMap(
             geoPoint,
-            PointZoom.SMALL_1.zoom,
+            viewBinding.map.zoomLevelDouble,
             PointId.CURRENT_LOCATION_ID.value,
             "",
             isFixedCurrentLocation ?: false
@@ -251,49 +233,29 @@ class MapFragment : Fragment(), LocationListener {
         return result[0]
     }
 
-    override fun onProviderDisabled(provider: String) {
+    override fun setStateProviderDisabled() {
         changeCurrentLocationMarkerColor(R.color.black)
         changeLocationButtonIcon(DISABLED)
         createSnackbar(getString(R.string.no_location))
     }
 
-    override fun onProviderEnabled(provider: String) {
+    override fun setStateProviderEnabled() {
         changeCurrentLocationMarkerColor(R.color.purple_500)
         changeLocationButtonIcon(ENABLED)
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-        //this method must me override because minSDK is 22
-    }
-
     private fun initCurrentLocationButton() {
         viewBinding.currentLocationButton.setOnClickListener {
-            checkLocationPermissionAndRequestUpdates()
+            tryUpdateCurrentLocationMarker()
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun tryUpdateLocationManager() {
-        if (checkSelfPermissionLocation() && getLocationMode() == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
-            alertDialogTitle = null
-            locationManager?.removeUpdates(this)
-            locationManager?.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                500L,
-                0.5F,
-                this
-            )
-            locationManager?.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                500L,
-                0.5F,
-                this
-            )
-            changeLocationButtonIcon(ENABLED)
-            if (isFixedCurrentLocation == true && getMarkerById(PointId.DEFAULT_ID.value) == null)
-                startProgress()
-        }
+    private fun tryUpdateLocation() {
+        alertDialogTitle = null
+        locationService?.tryUpdateLocation()
+        changeLocationButtonIcon(ENABLED)
+        if (isFixedCurrentLocation == true && getMarkerById(PointId.DEFAULT_ID.value) == null)
+            startProgress()
     }
 
     //get overlay (marker) by id
@@ -324,129 +286,22 @@ class MapFragment : Fragment(), LocationListener {
         drawable?.setTint(getColor(requireContext(), color))
     }
 
-    private fun getLocationMode(): Int =
-        Settings.Secure.getInt(requireActivity().contentResolver, Settings.Secure.LOCATION_MODE)
-
-    private fun checkLocationPermissionAndRequestUpdates() {
-        if (checkPermission()) {
-            when (getLocationMode()) {
-                Settings.Secure.LOCATION_MODE_OFF -> createAlertDialogGeoPositionDisabled()
-                Settings.Secure.LOCATION_MODE_HIGH_ACCURACY -> {
-                    alertDialogTitle = null
-                    val marker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)
-                    if (marker != null) {
-                        viewBinding.map.controller.apply {
-                            setZoom(PointZoom.SMALL_1.zoom)
-                            animateTo(GeoPoint(marker.position))
-                        }
-                        setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
-                    } else {
-                        tryUpdateLocationManager()
-                        startProgress()
-                    }
-                    isFixedCurrentLocation = true
-                }
-                else -> {
-                    createAlertDialogChangeLocationMode()
-                }
+    //todo в отдельном классе и абстрактно
+    private fun tryUpdateCurrentLocationMarker() {
+        alertDialogTitle = null
+        val marker = getMarkerById(PointId.CURRENT_LOCATION_ID.value)
+        if (marker != null) {
+            viewBinding.map.controller.apply {
+                setZoom(PointZoom.SMALL_1.zoom)
+                animateTo(GeoPoint(marker.position))
             }
+            setColor(R.color.purple_500, viewBinding.currentLocationButton.icon)
         }
-    }
-
-    //check location permission
-    private fun checkPermission(): Boolean {
-        var result = false
-        when {
-            //if granted
-            checkSelfPermissionLocation() -> {
-                result = true
-            }
-            //if was denied and should show rationale
-            shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
-                createAlertDialogLocationPermissionDenied()
-            }
-            //if was denied
-            else ->
-                requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        else {
+            tryUpdateLocation()
+            startProgress()
         }
-        return result
-    }
-
-    private fun checkSelfPermissionLocation() =
-        ContextCompat.checkSelfPermission(
-            requireContext(),
-            android.Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-    private fun createAlertDialogByTitle(savedTitle: TitleAlertDialog?) {
-        if (savedTitle != null)
-            when (alertDialogTitle) {
-                TitleAlertDialog.GEO_POSITION_DISABLED -> createAlertDialogGeoPositionDisabled()
-                TitleAlertDialog.LOCATION_PERMISSION_DENIED -> createAlertDialogLocationPermissionDenied()
-                TitleAlertDialog.CHANGE_LOCATION_MODE -> createAlertDialogChangeLocationMode()
-                else -> throw RuntimeException("Unknown title $alertDialogTitle")
-            }
-    }
-
-    private fun createAlertDialogChangeLocationMode() {
-        createAlertDialog(
-            TitleAlertDialog.CHANGE_LOCATION_MODE,
-            getString(R.string.change_location_mode)
-        ) {
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        }
-    }
-
-    private fun createAlertDialogLocationPermissionDenied() {
-        createAlertDialog(
-            TitleAlertDialog.LOCATION_PERMISSION_DENIED,
-            getString(R.string.location_rationale)
-        ) {
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts(
-                        "package",
-                        requireActivity().packageName,
-                        null
-                    ) //uri of this application settings
-                )
-            )
-        }
-    }
-
-    private fun createAlertDialogGeoPositionDisabled() {
-        createAlertDialog(
-            TitleAlertDialog.GEO_POSITION_DISABLED,
-            getString(R.string.location_disabled)
-        ) {
-            //open location settings
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        }
-    }
-
-    private fun createAlertDialog(
-        title: TitleAlertDialog,
-        message: String,
-        positiveFunction: (() -> Unit)? = null
-    ) {
-        alertDialog =
-            AlertDialog.Builder(requireContext())
-                .setMessage(message)
-                .setTitle(title.stringRes)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok) { dialog, _ ->
-                    dialog.dismiss()
-                    alertDialogTitle = null
-                    positiveFunction?.invoke()
-                }
-                .setNegativeButton(R.string.cancel) { dialog, _ ->
-                    dialog.dismiss()
-                    alertDialogTitle = null
-                }
-                .create()
-        alertDialog?.show()
-        alertDialogTitle = title
+        isFixedCurrentLocation = true
     }
 
     private fun showPointOnMap(
@@ -512,12 +367,7 @@ class MapFragment : Fragment(), LocationListener {
                 null //no choose listener
             )
             if (isCurrentLocationInfoWindowOpened) {
-                startProgress()
-                mapViewModel.getPointByLatLon(
-                    geoPoint.latitude,
-                    geoPoint.longitude,
-                    PointMode.CURRENT_LOCATION_POINT
-                )
+                getMarkerAddress(geoPoint)
             }
             if (idString != PointId.CURRENT_LOCATION_ID.value)
                 showInfoWindow()
@@ -526,12 +376,7 @@ class MapFragment : Fragment(), LocationListener {
                     if (marker.title != "" && !marker.isInfoWindowShown)
                         marker.showInfoWindow()
                     else {
-                        startProgress()
-                        mapViewModel.getPointByLatLon(
-                            geoPoint.latitude,
-                            geoPoint.longitude,
-                            PointMode.CURRENT_LOCATION_POINT
-                        )
+                        getMarkerAddress(geoPoint)
                     }
                     viewBinding.map.controller.animateTo(GeoPoint(marker.position))
                     isCurrentLocationInfoWindowOpened = true
@@ -540,6 +385,15 @@ class MapFragment : Fragment(), LocationListener {
             }
         }
         showPointOnMap(geoPoint, marker, pointZoom, shouldAnimate)
+    }
+
+    private fun getMarkerAddress(geoPoint: GeoPoint) {
+        startProgress()
+        mapViewModel.getPointByLatLon(
+            geoPoint.latitude,
+            geoPoint.longitude,
+            PointMode.CURRENT_LOCATION_POINT
+        )
     }
 
     private fun setVisibilityForShowMode(visibility: Int) {
@@ -605,8 +459,10 @@ class MapFragment : Fragment(), LocationListener {
 
     private fun buildPolyline(points: List<GeoPoint>): Polyline {
         return Polyline().apply {
-            color = getColor(requireContext(), R.color.purple_500)
-            width = 6.0f
+            with(outlinePaint) {
+                color = getColor(requireContext(), R.color.purple_500)
+                outlinePaint.strokeWidth = 6.0f
+            }
             setPoints(points)
         }
     }
@@ -686,18 +542,6 @@ class MapFragment : Fragment(), LocationListener {
         }
     }
 
-    private fun createSnackbar(message: String) {
-        view?.let {
-            Snackbar.make(
-                it,
-                message,
-                Snackbar.LENGTH_LONG
-            ).apply {
-                animationMode = Snackbar.ANIMATION_MODE_SLIDE
-            }.show()
-        }
-    }
-
     private fun initSearchButton() {
         viewBinding.searchButton.setOnClickListener {
             //navigate to SearchFragment
@@ -771,11 +615,10 @@ class MapFragment : Fragment(), LocationListener {
     }
 
     override fun onPause() {
+        super.onPause()
         viewBinding.map.onPause()
-        locationManager?.removeUpdates(this)
         alertDialog?.dismiss()
         mapOrientation = viewBinding.map.mapOrientation
-        super.onPause()
     }
 
     //clean view binding
