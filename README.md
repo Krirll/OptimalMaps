@@ -16,41 +16,42 @@
 ![Service](https://img.shields.io/badge/-Service-081472?style=for-the-badge&logo=android)\
 ![LiveData](https://img.shields.io/badge/-LiveData-orange?style=for-the-badge&logo=)\
 ![Retrofit](https://img.shields.io/badge/-Retrofit-00CC00?style=for-the-badge&logo=)\
-![Room](https://img.shields.io/badge/-Room-57AFD5?style=for-the-badge&logo=sqlite)
+![Room](https://img.shields.io/badge/-Room-57AFD5?style=for-the-badge&logo=sqlite)\
+![OpenStreetMap](https://img.shields.io/badge/-openstreetmap-gray?style=for-the-badge&logo=openstreetmap)
 
-## Результат
-### Карта
+# Результат
+## Карта
 <p>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110050_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110947_Permission controller.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110109_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110155_OptimalMaps.png" width="300"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110050_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110947_Permission controller.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110109_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110155_OptimalMaps.jpg" width="250"/>
 </p>
 
-### Получение адреса по долгому нажатию
+## Получение адреса по долгому нажатию
 <p>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110222_OptimalMaps.png" width="300"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110222_OptimalMaps.jpg" width="250"/>
 </p>
 
-### Поиск объектов с клавиатуры
+## Поиск объектов с клавиатуры
 <p>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110327_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110343_OptimalMaps.png" width="300"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110327_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110343_OptimalMaps.jpg" width="250"/>
 </p>
 
-### Создание маршрутов
+## Создание маршрутов
 <p>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110404_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110412_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110421_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110437_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110446_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110609_OptimalMaps.png" width="300"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110404_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110412_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110421_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110437_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110446_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110609_OptimalMaps.jpg" width="250"/>
 </p>
 
-### Обзор маршрута, навигатор, история маршрутов
+## История маршрутов, обзор построенного маршрута, навигатор
 <p>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110817_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110628_OptimalMaps.png" width="300"/>
-  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110733_OptimalMaps.png" width="300"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110817_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110628_OptimalMaps.jpg" width="250"/>
+  <img src="https://github.com/Krirll/OptimalMaps/blob/master/readme-images/Screenshot_20230602_110733_OptimalMaps.jpg" width="250"/>
 </p>
